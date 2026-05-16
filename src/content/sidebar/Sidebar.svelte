@@ -37,8 +37,8 @@
 
 {#if sidebarState.open}
   <aside
-    class="fixed right-0 top-0 z-[2147483647] h-screen bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl backdrop-saturate-150 border-l border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-zinc-100 font-sans shadow-2xl shadow-black/10 dark:shadow-black/30 transition-all duration-300 ease-[cubic-bezier(0.22,0.61,0.36,1)] relative"
-    style="width: 340px; will-change: transform;">
+    class="fixed top-0 z-[2147483647] h-screen bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl backdrop-saturate-150 border-l border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-zinc-100 font-sans shadow-2xl shadow-black/10 dark:shadow-black/30 transition-all duration-300 ease-[cubic-bezier(0.22,0.61,0.36,1)] relative"
+    style="right: var(--pb-scrollbar-w, 0px); width: 340px; will-change: transform;">
 
     <!-- Brand-colored top accent stripe (matches Canvas's left-nav color) -->
     <div class="pointer-events-none absolute left-0 right-0 top-0 h-[3px]" style="background: linear-gradient(90deg, var(--pb-brand), color-mix(in srgb, var(--pb-brand) 60%, transparent));"></div>
@@ -132,9 +132,9 @@
   <!-- Full-height slim rail collapsed state — sibling to Canvas's left nav -->
   <button
     onclick={() => sidebarState.open = true}
-    class="fixed right-0 top-0 h-screen z-[2147483647] flex items-center justify-center transition-[width,box-shadow] duration-200 ease-out group"
+    class="fixed top-0 h-screen z-[2147483647] flex items-center justify-center transition-[width,box-shadow] duration-200 ease-out group"
     aria-label="Expand Paintbrush sidebar"
-    style="width: 14px; background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: inset 2px 0 0 color-mix(in srgb, var(--pb-brand-fg) 12%, transparent), -2px 0 18px color-mix(in srgb, var(--pb-brand) 22%, transparent);"
+    style="right: var(--pb-scrollbar-w, 0px); width: 14px; background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: inset 2px 0 0 color-mix(in srgb, var(--pb-brand-fg) 12%, transparent), -2px 0 18px color-mix(in srgb, var(--pb-brand) 22%, transparent);"
     onmouseenter={(e) => (e.currentTarget.style.width = '20px')}
     onmouseleave={(e) => (e.currentTarget.style.width = '14px')}>
     <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:-translate-x-px transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">

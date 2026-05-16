@@ -68,6 +68,16 @@ export async function mountSidebar(): Promise<() => void> {
   applyDarkMode();
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkMode);
 
+  // Offset the sidebar past the page's vertical scrollbar so the rail stays clickable.
+  function applyScrollbarOffset() {
+    const w = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    appRoot.style.setProperty('--pb-scrollbar-w', `${w}px`);
+  }
+  applyScrollbarOffset();
+  window.addEventListener('resize', applyScrollbarOffset);
+  const scrollbarRO = new ResizeObserver(applyScrollbarOffset);
+  scrollbarRO.observe(document.documentElement);
+
   const defaultOpen = await getLocal('sidebarDefaultOpen');
   const app = mount(Sidebar, { target: appRoot, props: { open: defaultOpen } });
 
@@ -75,5 +85,7 @@ export async function mountSidebar(): Promise<() => void> {
     unmount(app);
     host.remove();
     window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', applyDarkMode);
+    window.removeEventListener('resize', applyScrollbarOffset);
+    scrollbarRO.disconnect();
   };
 }
