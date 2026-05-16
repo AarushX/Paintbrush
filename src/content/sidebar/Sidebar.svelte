@@ -1,6 +1,7 @@
 <script lang="ts">
   import { sidebarState, loadInitial, refresh, groupedView } from './stores.svelte';
   import { onMount } from 'svelte';
+  import TodoItem from './TodoItem.svelte';
 
   let { open: openProp = true }: { open?: boolean } = $props();
   $effect.pre(() => { sidebarState.open = openProp; });
@@ -64,10 +65,7 @@
             {label} <span class="text-zinc-400 font-normal">{groups[key].length}</span>
           </div>
           {#each groups[key] as item (item.plannable_id + ':' + item.plannable_type)}
-            <a href={item.html_url} target="_blank" rel="noopener" class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-l-[3px]" style="border-color: {sidebarState.colors['course_' + item.course_id] ?? '#cbd5e1'}">
-              <div class="text-sm font-medium truncate">{item.plannable.title ?? item.plannable.name ?? 'Untitled'}</div>
-              <div class="text-[11px] text-zinc-500">{item.context_name ?? ''}</div>
-            </a>
+            <TodoItem {item} color={sidebarState.colors['course_' + item.course_id] ?? '#cbd5e1'} />
           {/each}
         {/if}
       {/each}

@@ -1,5 +1,5 @@
 import type { PlannerItem } from '../../lib/types';
-import { fetchPlannerItems, getCachedPlannerItems, setCachedPlannerItems, getCourseColors } from './api';
+import { fetchPlannerItems, getCachedPlannerItems, setCachedPlannerItems, getCourseColors, markComplete } from './api';
 import { groupByDueWindow, filterByType, type ItemTypeFilter } from './grouping';
 
 export const sidebarState = $state({
@@ -40,4 +40,17 @@ export async function refresh() {
 export function groupedView() {
   const filtered = filterByType(sidebarState.items, sidebarState.filter);
   return groupByDueWindow(filtered);
+}
+
+export async function markItemComplete(item: PlannerItem) {
+  try {
+    await markComplete(item);
+    sidebarState.items = sidebarState.items.map((i) =>
+      i.plannable_id === item.plannable_id && i.plannable_type === item.plannable_type
+        ? { ...i, planner_override: { id: 0, marked_complete: true } }
+        : i
+    );
+  } catch (err) {
+    sidebarState.error = err instanceof Error ? err.message : String(err);
+  }
 }
