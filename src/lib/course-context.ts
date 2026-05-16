@@ -106,3 +106,25 @@ export function isInboxPage(url: string): boolean {
     return false;
   }
 }
+
+// === files-viewer additions ===
+
+export function parseFilesFolderPath(url: string): { courseId: number; folderPath: string } | null {
+  try {
+    const m = new URL(url).pathname.match(/\/courses\/(\d+)\/files(?:\/folder\/(.*))?\/?$/);
+    if (!m) return null;
+    return { courseId: Number(m[1]), folderPath: m[2] ? decodeURIComponent(m[2]) : '' };
+  } catch {
+    return null;
+  }
+}
+
+// === quizzes-viewer additions ===
+
+export function isQuizzesListPage(url: string): boolean {
+  try {
+    return /\/courses\/\d+\/quizzes\/?(\?|$)/.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}

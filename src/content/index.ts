@@ -1,8 +1,4 @@
 import { mountSidebar } from './inject/mount';
-import { watchAndInject, isFilesPage, isModulesPage, isCourseRootPage } from './inject/buttons';
-import { downloadAllFiles } from './downloader/files';
-import { exportModules } from './downloader/modules';
-import { exportEntireCourse } from './downloader/course';
 import { parseDiscussionFromUrl, parseCourseFromUrl, parseAssignmentFromUrl, isAssignmentListPage, isAnnouncementsListPage } from '../lib/course-context';
 import { mountDiscussionViewer } from './discussion/inject';
 import { mountAssignmentViewer } from './assignment/inject';
@@ -194,35 +190,11 @@ async function init() {
       syncDashboardMount();
       syncCalendarMount();
       syncInboxMount();
+      syncFilesMount();
+      syncQuizzesMount();
     }
   }, 500);
 
-  watchAndInject(
-    {
-      id: 'paintbrush-download-files-btn',
-      label: '⬇ Download all files (.zip)',
-      onClick: (courseId) => downloadAllFiles(courseId)
-    },
-    () => isFilesPage(location.href)
-  );
-
-  watchAndInject(
-    {
-      id: 'paintbrush-export-modules-btn',
-      label: '⬇ Export modules (.zip)',
-      onClick: (courseId) => exportModules(courseId)
-    },
-    () => isModulesPage(location.href)
-  );
-
-  watchAndInject(
-    {
-      id: 'paintbrush-export-course-btn',
-      label: '⬇ Export entire course (.zip)',
-      onClick: (courseId) => exportEntireCourse(courseId)
-    },
-    () => isCourseRootPage(location.href)
-  );
 }
 
 init().catch((err) => console.error('[Paintbrush]', err));
@@ -311,3 +283,44 @@ function syncInboxMount() {
 }
 
 syncInboxMount();
+
+// === files+quizzes viewer additions ===
+import { isFilesPage as isFilesViewerPage, parseFilesFolderPath, isQuizzesListPage } from '../lib/course-context';
+import { mountFilesViewer } from './files/inject';
+import { mountQuizzesViewer } from './quizzes/inject';
+
+let filesCleanup: (() => void) | null = null;
+let lastFilesKey: string | null = null;
+function syncFilesMount() {
+  const parsed = parseFilesFolderPath(location.href);
+  let key: string | null = null;
+  if (parsed && isFilesViewerPage(location.href)) key = `${parsed.courseId}:${parsed.folderPath}`;
+  if (key === lastFilesKey) return;
+  if (filesCleanup) { filesCleanup(); filesCleanup = null; }
+  lastFilesKey = key;
+  if (!key || !parsed) return;
+  requestAnimationFrame(() => {
+    filesCleanup = mountFilesViewer(parsed.courseId, parsed.folderPath);
+  });
+}
+
+let quizzesCleanup: (() => void) | null = null;
+let lastQuizzesKey: string | null = null;
+function syncQuizzesMount() {
+  let key: string | null = null;
+  if (isQuizzesListPage(location.href)) {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) key = String(cid);
+  }
+  if (key === lastQuizzesKey) return;
+  if (quizzesCleanup) { quizzesCleanup(); quizzesCleanup = null; }
+  lastQuizzesKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) quizzesCleanup = mountQuizzesViewer(cid);
+  });
+}
+
+syncFilesMount();
+syncQuizzesMount();

@@ -99,3 +99,6 @@ export { isCalendarPage } from '../../lib/course-context';
 
 // === inbox additions ===
 export { isInboxPage } from '../../lib/course-context';
+
+// === files+quizzes viewer additions ===
+export { parseFilesFolderPath, isQuizzesListPage } from '../../lib/course-context';

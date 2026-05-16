@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fetchModulesFull } from './api';
+  import { exportModules } from '../downloader/modules';
   import type { ModuleFull, ModuleItemFull } from '../../lib/types';
 
   let { courseId }: { courseId: number } = $props();
@@ -85,14 +86,22 @@
 
 <div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
   <div class="max-w-3xl mx-auto px-6 py-8">
-    <header class="mb-6">
-      <div class="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-zinc-400 mb-2">
-        <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pb-brand);"></span>
-        Modules
-        <span class="text-zinc-300 dark:text-zinc-700">·</span>
-        <span>{filtered.length}</span>
+    <header class="mb-6 flex items-center justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-zinc-400 mb-2">
+          <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pb-brand);"></span>
+          Modules
+          <span class="text-zinc-300 dark:text-zinc-700">·</span>
+          <span>{filtered.length}</span>
+        </div>
+        <h1 class="text-2xl font-semibold tracking-tight">Modules</h1>
       </div>
-      <h1 class="text-2xl font-semibold tracking-tight">Modules</h1>
+      <button onclick={() => exportModules(courseId)}
+              class="px-3 py-1.5 text-xs font-medium rounded-md active:scale-95 transition-transform flex items-center gap-1.5"
+              style="background: var(--pb-brand); color: var(--pb-brand-fg);">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+        Export modules (.zip)
+      </button>
     </header>
 
     <div class="flex items-center gap-2 mb-5">

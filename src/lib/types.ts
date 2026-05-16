@@ -317,6 +317,59 @@ export interface CanvasUser {
   }>;
 }
 
+// === files-viewer additions ===
+
+export interface FolderFull {
+  id: number;
+  name: string;
+  full_name: string;
+  parent_folder_id: number | null;
+  context_id: number;
+  context_type: string;
+  position?: number;
+  updated_at?: string;
+  files_count?: number;
+  folders_count?: number;
+  locked?: boolean;
+  locked_for_user?: boolean;
+}
+
+export interface FileFull {
+  id: number;
+  display_name: string;
+  filename: string;
+  url: string;
+  size: number;
+  folder_id: number;
+  updated_at?: string;
+  created_at?: string;
+  content_type?: string;
+  thumbnail_url?: string | null;
+  preview_url?: string | null;
+  locked?: boolean;
+  locked_for_user?: boolean;
+  hidden?: boolean;
+}
+
+// === quizzes-viewer additions ===
+
+export interface QuizFull {
+  id: number;
+  title: string;
+  html_url: string;
+  description: string | null;
+  quiz_type?: 'practice_quiz' | 'assignment' | 'graded_survey' | 'survey' | string;
+  time_limit?: number | null;
+  points_possible: number | null;
+  due_at: string | null;
+  unlock_at?: string | null;
+  lock_at?: string | null;
+  question_count?: number;
+  allowed_attempts?: number;
+  published?: boolean;
+  locked_for_user?: boolean;
+}
+
 export interface Section {
   id: number;
   name: string;

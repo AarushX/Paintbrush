@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fetchCourseFull, fetchUpcomingAssignments, fetchRecentAnnouncements } from './api';
+  import { exportEntireCourse } from '../downloader/course';
   import type { CourseWithMeta, AssignmentListItem, Announcement } from '../../lib/types';
 
   let { courseId }: { courseId: number } = $props();
@@ -84,7 +85,15 @@
           {course.course_code ?? 'Course'}
           {#if course.term?.name}<span class="text-zinc-300 dark:text-zinc-700">·</span><span>{course.term.name}</span>{/if}
         </div>
-        <h1 class="text-2xl font-semibold tracking-tight">{course.name}</h1>
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <h1 class="text-2xl font-semibold tracking-tight">{course.name}</h1>
+          <button onclick={() => exportEntireCourse(courseId)}
+                  class="px-3 py-1.5 text-xs font-medium rounded-md active:scale-95 transition-transform flex items-center gap-1.5 flex-shrink-0"
+                  style="background: var(--pb-brand); color: var(--pb-brand-fg);">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+            Export entire course (.zip)
+          </button>
+        </div>
       </header>
 
       <!-- Stats grid -->
