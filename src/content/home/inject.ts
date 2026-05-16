@@ -34,15 +34,20 @@ function detectBrand() {
 }
 
 export function mountHomeViewer(courseId: number): () => void {
-  if (document.getElementById(HOST_ID)) return () => {};
+  console.log('[Paintbrush] mountHomeViewer entered, courseId =', courseId);
+  if (document.getElementById(HOST_ID)) {
+    console.log('[Paintbrush] home host already exists; skipping');
+    return () => {};
+  }
 
   const container = findContainer();
+  console.log('[Paintbrush] home anchor =', container?.id ?? container?.tagName ?? 'null', 'parent =', container?.parentNode?.nodeName);
   const prevDisplay = container?.style.display ?? '';
   if (container) container.style.display = 'none';
 
   const host = document.createElement('div');
   host.id = HOST_ID;
-  host.style.cssText = 'all: initial; position: relative; width: 100%; pointer-events: auto;';
+  host.style.cssText = 'all: initial; display: block; position: relative; width: 100%; min-height: 100vh; pointer-events: auto;';
   if (container && container.parentNode) {
     container.parentNode.insertBefore(host, container);
   } else {

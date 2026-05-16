@@ -39,7 +39,18 @@ style.textContent = `
   html[data-pb-page]:not([data-pb-page=""]) .ic-app-crumbs,
   html[data-pb-page]:not([data-pb-page=""]) #wrapper > header,
   html[data-pb-page]:not([data-pb-page=""]) #left-side,
-  html[data-pb-page]:not([data-pb-page=""]) #section-tabs {
+  html[data-pb-page]:not([data-pb-page=""]) #section-tabs,
+  html[data-pb-page]:not([data-pb-page=""]) .immersive_reader_mount_point,
+  html[data-pb-page]:not([data-pb-page=""]) [data-testid="immersive-reader-button"],
+  html[data-pb-page]:not([data-pb-page=""]) [data-testid*="ImmersiveReader" i],
+  html[data-pb-page]:not([data-pb-page=""]) button[aria-label*="Immersive Reader" i],
+  html[data-pb-page]:not([data-pb-page=""]) a[aria-label*="Immersive Reader" i],
+  html[data-pb-page]:not([data-pb-page=""]) .ImmersiveReaderButton,
+  html[data-pb-page]:not([data-pb-page=""]) #syllabus_navigation,
+  html[data-pb-page]:not([data-pb-page=""]) #syllabus_nav,
+  html[data-pb-page]:not([data-pb-page=""]) .syllabus-navigation,
+  html[data-pb-page]:not([data-pb-page=""]) #wrapper > #header,
+  html[data-pb-page]:not([data-pb-page=""]) #ic-mobile-toolbar {
     display: none !important;
   }
   html[data-pb-page]:not([data-pb-page=""]) body {

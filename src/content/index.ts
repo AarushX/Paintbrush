@@ -268,17 +268,26 @@ async function init() {
   let lastHomeKey: string | null = null;
   function syncHomeMount() {
     let key: string | null = null;
-    if (isCourseHomePage(location.href)) {
+    const isHome = isCourseHomePage(location.href);
+    if (isHome) {
       const cid = parseCourseFromUrl(location.href);
       if (cid != null) key = String(cid);
     }
     if (key === lastHomeKey) return;
+    LOG('syncHomeMount: key=', key, 'isHome=', isHome, 'url=', location.href);
     if (homeCleanup) { homeCleanup(); homeCleanup = null; }
     lastHomeKey = key;
     if (!key) return;
     requestAnimationFrame(() => {
       const cid = parseCourseFromUrl(location.href);
-      if (cid != null) homeCleanup = mountHomeViewer(cid);
+      if (cid != null) {
+        try {
+          homeCleanup = mountHomeViewer(cid);
+          LOG('home mounted ✓');
+        } catch (err) {
+          ERR('mountHomeViewer failed', err);
+        }
+      }
     });
   }
 

@@ -54,7 +54,7 @@ export function mountDiscussionList(courseId: number): () => void {
 
   const host = document.createElement('div');
   host.id = HOST_ID;
-  host.style.cssText = 'all: initial; position: relative; width: 100%; pointer-events: auto;';
+  host.style.cssText = 'all: initial; display: block; position: relative; width: 100%; min-height: 100vh; pointer-events: auto;';
   anchor.parentNode?.insertBefore(host, anchor);
 
   const shadow = host.attachShadow({ mode: 'open' });
