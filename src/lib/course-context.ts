@@ -77,3 +77,15 @@ export function isDiscussionsListPage(url: string): boolean {
   // but NOT /courses/:id/discussion_topics/123 (that's the detail page).
   return /\/courses\/\d+\/discussion_topics\/?(\?|$)/.test(url);
 }
+
+// === dashboard additions ===
+
+export function isDashboardPage(url: string): boolean {
+  // Strictly the Canvas root: "/" with optional query, nothing else
+  try {
+    const u = new URL(url);
+    return u.pathname === '/' || u.pathname === '';
+  } catch {
+    return false;
+  }
+}

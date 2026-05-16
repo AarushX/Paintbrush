@@ -177,6 +177,62 @@ export interface Submission {
   preview_url?: string;
 }
 
+// === dashboard additions ===
+
+export interface DashboardCard {
+  id: number;
+  longName: string;
+  shortName: string;
+  originalName: string;
+  courseCode: string;
+  assetString?: string;
+  href: string;
+  term?: string;
+  subtitle?: string;
+  enrollmentState?: string;
+  image?: string | null;
+  color?: string | null;
+  position?: number | null;
+  isFavorited?: boolean;
+  isK5Subject?: boolean;
+  isHomeroom?: boolean;
+  canManage?: boolean;
+  canChangeCourseState?: boolean;
+  defaultView?: string;
+  pagesUrl?: string;
+  frontPageTitle?: string | null;
+  links?: Array<{
+    css_class: string;
+    hidden?: boolean | null;
+    icon: string;
+    label: string;
+    path: string;
+  }>;
+}
+
+export interface CanvasUserSelf {
+  id: number;
+  name: string;
+  short_name?: string;
+  sortable_name?: string;
+  avatar_url?: string;
+  primary_email?: string;
+  effective_locale?: string;
+  time_zone?: string;
+}
+
+export interface CourseWithScore {
+  id: number;
+  name: string;
+  course_code: string;
+  enrollments?: Array<{
+    type: string;
+    computed_current_score?: number | null;
+    computed_current_grade?: string | null;
+  }>;
+  image_download_url?: string | null;
+}
+
 export interface AssignmentFull extends Assignment {
   course_id?: number;
   has_submitted_submissions?: boolean;

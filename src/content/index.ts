@@ -191,6 +191,7 @@ async function init() {
       syncGradesMount();
       syncHomeMount();
       syncDiscussionListMount();
+      syncDashboardMount();
     }
   }, 500);
 
@@ -255,3 +256,22 @@ syncDiscussionListMount();
 import { applyCanvasSkin } from './skin/inject';
 
 applyCanvasSkin();
+
+// === dashboard additions ===
+import { isDashboardPage } from '../lib/course-context';
+import { mountDashboardViewer } from './dashboard/inject';
+
+let dashboardCleanup: (() => void) | null = null;
+let lastDashboardKey: string | null = null;
+function syncDashboardMount() {
+  const key = isDashboardPage(location.href) ? 'dashboard' : null;
+  if (key === lastDashboardKey) return;
+  if (dashboardCleanup) { dashboardCleanup(); dashboardCleanup = null; }
+  lastDashboardKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => {
+    dashboardCleanup = mountDashboardViewer();
+  });
+}
+
+syncDashboardMount();
