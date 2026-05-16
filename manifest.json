@@ -26,8 +26,13 @@
   "content_scripts": [
     {
       "matches": ["*://*.instructure.com/*"],
-      "js": ["src/content/index.ts"],
+      "js": ["src/content/eager.ts"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.instructure.com/*"],
+      "js": ["src/content/index.ts"],
+      "run_at": "document_idle"
     }
   ],
   "options_page": "src/options/index.html"

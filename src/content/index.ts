@@ -15,92 +15,42 @@ import { mountHomeViewer } from './home/inject';
 import { isDiscussionsListPage } from '../lib/course-context';
 import { mountDiscussionList } from './discussion-list/inject';
 
+const LOG = (...args: unknown[]) => console.log('[Paintbrush]', ...args);
+const WARN = (...args: unknown[]) => console.warn('[Paintbrush]', ...args);
+const ERR = (...args: unknown[]) => console.error('[Paintbrush]', ...args);
+
+LOG('content script loaded at', location.href, 'readyState =', document.readyState);
+
 let unmount: (() => void) | null = null;
 
-// ---------------------------------------------------------------------------
-// Eager FOUC suppression. We register at document_start, so we run BEFORE
-// Canvas paints anything. We tag <html> with a data-attribute identifying the
-// page type. The skin CSS (loaded by skin/inject.ts later) has rules keyed to
-// these attributes that hide Canvas's content for pages we replace, so the
-// user never sees the default Canvas page flash before our viewer mounts.
-// ---------------------------------------------------------------------------
-
-function pageTypeFor(url: string): string | null {
-  try {
-    const u = new URL(url);
-    if (u.pathname === '/' || u.pathname === '') return 'dashboard';
-    if (u.pathname.startsWith('/login')) return null;
-    if (/\/courses\/\d+\/discussion_topics\/\d+/.test(u.pathname)) return 'discussion';
-    if (/\/courses\/\d+\/discussion_topics\/?$/.test(u.pathname)) return 'discussions-list';
-    if (/\/courses\/\d+\/assignments\/\d+/.test(u.pathname)) return 'assignment';
-    if (/\/courses\/\d+\/assignments\/?$/.test(u.pathname)) return 'assignments';
-    if (/\/courses\/\d+\/announcements\/?$/.test(u.pathname)) return 'announcements';
-    if (/\/courses\/\d+\/modules\/?$/.test(u.pathname)) return 'modules';
-    if (/\/courses\/\d+\/users\/?$/.test(u.pathname)) return 'people';
-    if (/\/courses\/\d+\/grades\/?$/.test(u.pathname)) return 'grades';
-    if (/\/courses\/\d+\/files(\b|\/|\?)/.test(u.pathname)) return 'files';
-    if (/\/courses\/\d+\/quizzes\/?$/.test(u.pathname)) return 'quizzes';
-    if (/\/calendar2?\/?$/.test(u.pathname)) return 'calendar';
-    if (/\/conversations\/?(\?|$|#)/.test(u.pathname)) return 'inbox';
-    if (/\/courses\/\d+\/?$/.test(u.pathname)) return 'home';
-    return null;
-  } catch { return null; }
-}
-
+// Track current page type from <html data-pb-page="..."> set by eager.ts at document_start.
 function applyEagerHide() {
-  const t = pageTypeFor(location.href);
-  if (t) document.documentElement.setAttribute('data-pb-page', t);
-  else document.documentElement.removeAttribute('data-pb-page');
+  // Keep this in sync with eager.ts. Re-evaluated on SPA navigation.
+  try {
+    const u = new URL(location.href);
+    let t: string | null = null;
+    if (u.pathname === '/' || u.pathname === '') t = 'dashboard';
+    else if (u.pathname.startsWith('/login')) t = null;
+    else if (/\/courses\/\d+\/discussion_topics\/\d+/.test(u.pathname)) t = 'discussion';
+    else if (/\/courses\/\d+\/discussion_topics\/?$/.test(u.pathname)) t = 'discussions-list';
+    else if (/\/courses\/\d+\/assignments\/\d+/.test(u.pathname)) t = 'assignment';
+    else if (/\/courses\/\d+\/assignments\/?$/.test(u.pathname)) t = 'assignments';
+    else if (/\/courses\/\d+\/announcements\/?$/.test(u.pathname)) t = 'announcements';
+    else if (/\/courses\/\d+\/modules\/?$/.test(u.pathname)) t = 'modules';
+    else if (/\/courses\/\d+\/users\/?$/.test(u.pathname)) t = 'people';
+    else if (/\/courses\/\d+\/grades\/?$/.test(u.pathname)) t = 'grades';
+    else if (/\/courses\/\d+\/files(\b|\/|\?)/.test(u.pathname)) t = 'files';
+    else if (/\/courses\/\d+\/quizzes\/?$/.test(u.pathname)) t = 'quizzes';
+    else if (/\/calendar2?\/?$/.test(u.pathname)) t = 'calendar';
+    else if (/\/conversations\/?(\?|$|#)/.test(u.pathname)) t = 'inbox';
+    else if (/\/courses\/\d+\/?$/.test(u.pathname)) t = 'home';
+    if (t) document.documentElement.setAttribute('data-pb-page', t);
+    else document.documentElement.removeAttribute('data-pb-page');
+  } catch (err) {
+    ERR('applyEagerHide failed', err);
+  }
 }
 applyEagerHide();
-
-// Inject minimal FOUC-blocking CSS as soon as <html> exists. This runs at
-// document_start (per manifest), BEFORE Canvas paints, so the user never
-// sees the default Canvas page flash before our viewer mounts.
-(function injectEagerStyle() {
-  if (document.getElementById('paintbrush-eager-style')) return;
-  const style = document.createElement('style');
-  style.id = 'paintbrush-eager-style';
-  style.textContent = `
-    html[data-pb-page]:not([data-pb-page=""]) #main,
-    html[data-pb-page]:not([data-pb-page=""]) #content,
-    html[data-pb-page]:not([data-pb-page=""]) .ic-Action-header,
-    html[data-pb-page]:not([data-pb-page=""]) #breadcrumbs,
-    html[data-pb-page]:not([data-pb-page=""]) .ic-app-crumbs,
-    html[data-pb-page]:not([data-pb-page=""]) #wrapper > header,
-    html[data-pb-page]:not([data-pb-page=""]) #left-side,
-    html[data-pb-page]:not([data-pb-page=""]) #section-tabs {
-      display: none !important;
-    }
-    html[data-pb-page]:not([data-pb-page=""]) body {
-      background: #fafafa !important;
-    }
-    /* When the user explicitly expands our nav drawer, show #left-side
-       as a floating overlay anchored next to the global nav. #section-tabs
-       sits naturally inside it. */
-    html[data-pb-nav-expanded="true"] #left-side {
-      display: block !important;
-      position: fixed !important;
-      top: 52px !important;
-      left: 80px !important;
-      width: 240px !important;
-      max-height: calc(100vh - 64px) !important;
-      overflow-y: auto !important;
-      z-index: 2147483645 !important;
-      background: rgba(255, 255, 255, 0.98) !important;
-      border: 1px solid rgb(228 228 231) !important;
-      border-radius: 12px !important;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.12) !important;
-      padding: 8px !important;
-      backdrop-filter: blur(12px) saturate(150%) !important;
-    }
-    html[data-pb-nav-expanded="true"] #left-side #section-tabs,
-    html[data-pb-nav-expanded="true"] #left-side .ic-app-course-menu {
-      display: block !important;
-    }
-  `;
-  (document.head || document.documentElement).appendChild(style);
-})();
 
 // Floating nav-drawer toggle button. Visible only on viewer pages.
 // Clicking it expands/retracts the (otherwise hidden) Canvas section-tabs
@@ -160,9 +110,19 @@ function whenBodyReady(fn: () => void) {
 }
 
 async function init() {
-  if (location.pathname.startsWith('/login')) return;
+  LOG('init() running at', location.href, 'document.body =', !!document.body);
+  if (location.pathname.startsWith('/login')) {
+    LOG('skipping init on /login');
+    return;
+  }
 
-  unmount = await mountSidebar();
+  try {
+    LOG('mounting sidebar…');
+    unmount = await mountSidebar();
+    LOG('sidebar mounted ✓');
+  } catch (err) {
+    ERR('mountSidebar failed', err);
+  }
 
   let discussionCleanup: (() => void) | null = null;
   let lastDiscussionKey: string | null = null;
@@ -245,12 +205,21 @@ async function init() {
       if (cid != null) key = String(cid);
     }
     if (key === lastModulesKey) return;
+    LOG('syncModulesMount: key=', key, 'prev=', lastModulesKey, 'url=', location.href);
     if (modulesCleanup) { modulesCleanup(); modulesCleanup = null; }
     lastModulesKey = key;
     if (!key) return;
     requestAnimationFrame(() => {
       const cid = parseCourseFromUrl(location.href);
-      if (cid != null) modulesCleanup = mountModulesViewer(cid);
+      if (cid != null) {
+        try {
+          LOG('mounting modules viewer for course', cid);
+          modulesCleanup = mountModulesViewer(cid);
+          LOG('modules mounted ✓');
+        } catch (err) {
+          ERR('mountModulesViewer failed', err);
+        }
+      }
     });
   }
 
