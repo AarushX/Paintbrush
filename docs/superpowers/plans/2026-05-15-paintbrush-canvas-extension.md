@@ -68,7 +68,7 @@ Create `package.json`:
 
 Run:
 ```bash
-npm install
+pnpm install
 ```
 
 Expected: deps install without errors, `node_modules/` created.
@@ -163,7 +163,7 @@ coverage/
 - [ ] **Step 8: Commit**
 
 ```bash
-git add package.json package-lock.json tsconfig.json vite.config.ts tailwind.config.js postcss.config.js .gitignore
+git add package.json pnpm-lock.yaml tsconfig.json vite.config.ts tailwind.config.js postcss.config.js .gitignore
 git commit -m "chore: scaffold Svelte 5 + Vite + Tailwind + crxjs project"
 ```
 
@@ -266,7 +266,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Expected: builds to `dist/`, no errors. `dist/manifest.json` exists.
@@ -403,7 +403,7 @@ describe('parseNextLink', () => {
 
 Run:
 ```bash
-npm test -- canvas-api
+pnpm test -- canvas-api
 ```
 
 Expected: FAIL — `parseNextLink is not a function`.
@@ -426,7 +426,7 @@ export function parseNextLink(linkHeader: string | null): string | null {
 
 Run:
 ```bash
-npm test -- canvas-api
+pnpm test -- canvas-api
 ```
 
 Expected: PASS.
@@ -509,7 +509,7 @@ export class CanvasApiError extends Error {
 
 Run:
 ```bash
-npm test -- canvas-api
+pnpm test -- canvas-api
 ```
 
 Expected: PASS (5 tests).
@@ -623,7 +623,7 @@ export async function fetchWithRetry(url: string, options: RetryOptions = {}): P
 
 Run:
 ```bash
-npm test -- canvas-api
+pnpm test -- canvas-api
 ```
 
 Expected: PASS.
@@ -689,7 +689,7 @@ export async function canvasPost<T>(url: string, body: unknown, options: FetchOp
 
 Run:
 ```bash
-npm test -- canvas-api
+pnpm test -- canvas-api
 ```
 
 Expected: PASS.
@@ -781,7 +781,7 @@ describe('parseCourseFromUrl', () => {
 
 Run:
 ```bash
-npm test -- course-context
+pnpm test -- course-context
 ```
 
 Expected: FAIL.
@@ -833,7 +833,7 @@ describe('isModulesPage', () => {
 
 Run:
 ```bash
-npm test -- course-context
+pnpm test -- course-context
 ```
 
 Expected: PASS (7 tests).
@@ -903,7 +903,7 @@ describe('joinPath', () => {
 
 Run:
 ```bash
-npm test -- zip
+pnpm test -- zip
 ```
 
 Expected: FAIL.
@@ -971,7 +971,7 @@ export function triggerDownload(blob: Blob, filename: string): void {
 
 Run:
 ```bash
-npm test -- zip
+pnpm test -- zip
 ```
 
 Expected: PASS (10 tests).
@@ -1064,7 +1064,7 @@ describe('extractCanvasFileRefs', () => {
 
 Run:
 ```bash
-npm test -- markdown
+pnpm test -- markdown
 ```
 
 Expected: FAIL.
@@ -1159,7 +1159,7 @@ export function rewriteCanvasFileLinks(html: string, opts: RewriteOptions): stri
 
 Run:
 ```bash
-npm test -- markdown
+pnpm test -- markdown
 ```
 
 Expected: PASS.
@@ -1253,7 +1253,7 @@ describe('groupByDueWindow', () => {
 
 Run:
 ```bash
-npm test -- grouping
+pnpm test -- grouping
 ```
 
 Expected: FAIL.
@@ -1323,7 +1323,7 @@ export function filterByType(items: PlannerItem[], filter: ItemTypeFilter): Plan
 
 Run:
 ```bash
-npm test -- grouping
+pnpm test -- grouping
 ```
 
 Expected: PASS.
@@ -1435,7 +1435,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Expected: builds without errors. `dist/` contains the bundled content script and inlined CSS.
@@ -1657,7 +1657,7 @@ export function groupedView() {
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Then reload extension in Chrome, refresh a Canvas page. Expected:
@@ -1803,7 +1803,7 @@ In `Sidebar.svelte`, replace the placeholder anchor inside the `{#each groups[ke
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Reload extension, refresh Canvas. Expected:
@@ -1967,7 +1967,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Reload extension. Expected:
@@ -2139,7 +2139,7 @@ export function openProgress(initial: ProgressState = {}): ProgressHandle {
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Expected: builds without errors. (Manual UI testing happens in Task 14 when we wire it to the files download.)
@@ -2312,7 +2312,7 @@ watchAndInject(
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Reload extension, visit `/courses/:id/files` on a real course. Click the button. Expected:
@@ -2602,7 +2602,7 @@ watchAndInject(
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Reload extension, visit `/courses/:id/modules` on a real course. Click "Export modules". Expected:
@@ -2796,7 +2796,7 @@ async function restoreCustomScripts() {
 
 Run:
 ```bash
-npm run build
+pnpm run build
 ```
 
 Reload extension. Right-click extension icon → "Options". Expected:
@@ -2862,8 +2862,8 @@ A Chrome extension that paints two things onto Canvas:
 ## Install (development)
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 Then in Chrome → `chrome://extensions` → "Load unpacked" → select `dist/`.
@@ -2881,8 +2881,8 @@ See [docs/superpowers/specs/](docs/superpowers/specs/) for the full design.
 ## Tests
 
 ```bash
-npm test          # one-shot
-npm run test:watch
+pnpm test          # one-shot
+pnpm run test:watch
 ```
 
 ## Status
@@ -2894,7 +2894,7 @@ v0.1 — works on a single user's Canvas. No telemetry, no sync, no instructor t
 
 Run:
 ```bash
-npm test
+pnpm test
 ```
 
 Expected: all tests pass.
@@ -2903,7 +2903,7 @@ Expected: all tests pass.
 
 Run:
 ```bash
-npm run typecheck
+pnpm run typecheck
 ```
 
 Expected: no errors.
