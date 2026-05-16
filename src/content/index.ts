@@ -250,3 +250,8 @@ function syncDiscussionListMount() {
 }
 
 syncDiscussionListMount();
+
+// === skin additions ===
+import { applyCanvasSkin } from './skin/inject';
+
+applyCanvasSkin();

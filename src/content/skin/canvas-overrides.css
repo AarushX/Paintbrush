@@ -1,0 +1,389 @@
+/* ============================================
+   Paintbrush: Canvas UI refresh
+   Injected into document.head on every Canvas page.
+   ============================================ */
+
+:root {
+  /* Brand vars are set by the injector at runtime via JS.
+     These are FALLBACK values if detection fails. */
+  --pb-brand: #4f46e5;
+  --pb-brand-fg: #ffffff;
+  --pb-brand-soft: rgba(79, 70, 229, 0.12);
+  --pb-brand-strong: #3730a3;
+  --pb-radius-sm: 6px;
+  --pb-radius-md: 8px;
+  --pb-radius-lg: 12px;
+}
+
+/* ------------------------------------------------------
+   Global left navigation (.ic-app-header)
+   ------------------------------------------------------ */
+
+.ic-app-header {
+  border-right: 0 !important;
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--pb-brand-fg) 8%, transparent);
+}
+
+.ic-app-header__menu-list {
+  padding: 6px 6px !important;
+}
+
+.ic-app-header__menu-list-item {
+  margin: 2px 0 !important;
+}
+
+.ic-app-header__menu-list-link {
+  border-radius: var(--pb-radius-md) !important;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease !important;
+  padding: 10px 8px !important;
+  border-left: 0 !important;
+  position: relative;
+}
+
+.ic-app-header__menu-list-link:hover {
+  background-color: color-mix(in srgb, var(--pb-brand-fg) 10%, transparent) !important;
+}
+
+.ic-app-header__menu-list-link.ic-app-header__menu-list-link--active,
+.ic-app-header__menu-list-link[aria-current="page"] {
+  background-color: color-mix(in srgb, var(--pb-brand-fg) 14%, transparent) !important;
+}
+
+.ic-app-header__menu-list-link.ic-app-header__menu-list-link--active::before,
+.ic-app-header__menu-list-link[aria-current="page"]::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--pb-brand-fg);
+  opacity: 0.85;
+}
+
+.ic-app-header__menu-list-link .menu-item__text {
+  letter-spacing: 0.02em;
+  font-weight: 500 !important;
+}
+
+/* ------------------------------------------------------
+   Course secondary navigation (#section-tabs)
+   Within a course page, this is the per-course left list.
+   ------------------------------------------------------ */
+
+#section-tabs,
+.ic-app-course-menu {
+  border: 0 !important;
+  padding: 4px !important;
+}
+
+#section-tabs li,
+.ic-app-course-menu li {
+  margin: 2px 0 !important;
+  border: 0 !important;
+}
+
+#section-tabs li a,
+.ic-app-course-menu li a {
+  border-radius: var(--pb-radius-md) !important;
+  padding: 8px 12px !important;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease !important;
+  position: relative;
+  border-left: 0 !important;
+  font-weight: 500 !important;
+}
+
+#section-tabs li a:hover,
+.ic-app-course-menu li a:hover {
+  background-color: color-mix(in srgb, var(--pb-brand) 8%, transparent) !important;
+  color: var(--pb-brand-strong) !important;
+}
+
+#section-tabs li.section.active a,
+#section-tabs li a.active,
+.ic-app-course-menu li a.active {
+  background-color: var(--pb-brand-soft) !important;
+  color: var(--pb-brand-strong) !important;
+  font-weight: 600 !important;
+}
+
+#section-tabs li.section.active a::before,
+#section-tabs li a.active::before,
+.ic-app-course-menu li a.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--pb-brand);
+}
+
+/* Inactive section-tab items in the course nav — Canvas renders disabled items
+   as dim text. Keep them clearly disabled but smoother. */
+#section-tabs li a.disabled,
+.ic-app-course-menu li a.disabled {
+  opacity: 0.45;
+}
+
+/* ------------------------------------------------------
+   Page action header (top of each Canvas page)
+   ------------------------------------------------------ */
+
+.ic-Action-header {
+  border-bottom-color: rgb(228 228 231) !important; /* zinc-200 */
+  padding-bottom: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.ic-Action-header__Heading h1,
+.ic-Action-header__Heading h2 {
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* ------------------------------------------------------
+   Breadcrumbs
+   ------------------------------------------------------ */
+
+#breadcrumbs,
+.ic-app-crumbs {
+  background: transparent !important;
+  border-bottom: 0 !important;
+  padding: 10px 0 !important;
+}
+
+#breadcrumbs ul li a,
+.ic-app-crumbs__path li a {
+  color: rgb(113 113 122) !important; /* zinc-500 */
+  transition: color 160ms ease !important;
+}
+
+#breadcrumbs ul li a:hover,
+.ic-app-crumbs__path li a:hover {
+  color: var(--pb-brand-strong) !important;
+}
+
+/* ------------------------------------------------------
+   Buttons
+   ------------------------------------------------------ */
+
+.Button,
+.btn,
+.ui-button,
+button.btn-primary,
+a.btn-primary {
+  border-radius: var(--pb-radius-md) !important;
+  transition: background-color 160ms ease, transform 100ms ease, box-shadow 160ms ease !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.005em !important;
+}
+
+.Button:active,
+.btn:active,
+.ui-button:active {
+  transform: scale(0.97);
+}
+
+.Button--primary,
+.btn-primary {
+  background-color: var(--pb-brand) !important;
+  border-color: var(--pb-brand) !important;
+  color: var(--pb-brand-fg) !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--pb-brand) 30%, transparent) !important;
+}
+
+.Button--primary:hover,
+.btn-primary:hover {
+  background-color: var(--pb-brand-strong) !important;
+  border-color: var(--pb-brand-strong) !important;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--pb-brand) 35%, transparent) !important;
+}
+
+.Button--secondary,
+.btn-secondary {
+  background: white !important;
+  color: var(--pb-brand-strong) !important;
+  border: 1px solid color-mix(in srgb, var(--pb-brand) 25%, transparent) !important;
+}
+
+.Button--secondary:hover,
+.btn-secondary:hover {
+  background-color: var(--pb-brand-soft) !important;
+}
+
+/* ------------------------------------------------------
+   Inputs
+   ------------------------------------------------------ */
+
+input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  border-radius: var(--pb-radius-md) !important;
+  border-color: rgb(228 228 231) !important; /* zinc-200 */
+  transition: border-color 160ms ease, box-shadow 160ms ease !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  outline: 0 !important;
+  border-color: var(--pb-brand) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pb-brand) 18%, transparent) !important;
+}
+
+/* ------------------------------------------------------
+   Content boxes / cards
+   ------------------------------------------------------ */
+
+.content-box,
+.ic-Layout-watershed,
+.ic-Layout-page-content,
+.user_content,
+.content-box-mini {
+  border-radius: var(--pb-radius-md) !important;
+}
+
+/* Course cards on dashboard */
+.ic-DashboardCard {
+  border-radius: var(--pb-radius-lg) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03) !important;
+  transition: box-shadow 200ms ease, transform 200ms ease !important;
+  border: 0 !important;
+}
+
+.ic-DashboardCard:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04) !important;
+  transform: translateY(-1px);
+}
+
+.ic-DashboardCard__header_hero {
+  border-top-left-radius: var(--pb-radius-lg) !important;
+  border-top-right-radius: var(--pb-radius-lg) !important;
+}
+
+/* ------------------------------------------------------
+   Tables (Canvas's gradebook, roster, etc.)
+   ------------------------------------------------------ */
+
+table.ic-Table,
+.roster.ic-Table,
+table.assignment-list-content {
+  border-radius: var(--pb-radius-md) !important;
+  overflow: hidden;
+  border: 1px solid rgb(228 228 231) !important;
+}
+
+table.ic-Table thead th,
+.roster.ic-Table thead th {
+  background: rgb(250 250 251) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+  border-bottom: 1px solid rgb(228 228 231) !important;
+}
+
+/* ------------------------------------------------------
+   Tabs (the in-page tab strip, e.g. on assignment groups)
+   ------------------------------------------------------ */
+
+.ui-tabs-nav,
+.ui-tabs .ui-tabs-nav {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgb(228 228 231) !important;
+}
+
+.ui-tabs-nav li.ui-tabs-active a,
+.ui-tabs-nav li.ui-state-active a {
+  color: var(--pb-brand-strong) !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid var(--pb-brand) !important;
+}
+
+/* ------------------------------------------------------
+   Alerts / flashes
+   ------------------------------------------------------ */
+
+.ic-flash-success,
+.ic-flash-info,
+.ic-flash-warning,
+.ic-flash-error,
+.flash-message-container .ic-flash-success,
+.flash-message-container .ic-flash-info {
+  border-radius: var(--pb-radius-md) !important;
+  border: 0 !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+  font-weight: 500 !important;
+}
+
+/* ------------------------------------------------------
+   Modals
+   ------------------------------------------------------ */
+
+.ui-dialog,
+.ic-Modal {
+  border-radius: var(--pb-radius-lg) !important;
+  border: 0 !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.08) !important;
+}
+
+.ui-dialog .ui-dialog-titlebar,
+.ic-Modal__header {
+  border-bottom-color: rgb(228 228 231) !important;
+  padding: 16px 20px !important;
+}
+
+/* ------------------------------------------------------
+   Avoid leaking into our own shadow DOM containers
+   (defensive: shadow DOM blocks style inheritance, but
+   if any of these IDs appear in light DOM we leave them
+   alone).
+   ------------------------------------------------------ */
+
+#paintbrush-root,
+#paintbrush-discussion-root,
+#paintbrush-assignment-root,
+#paintbrush-announcement-root,
+#paintbrush-modules-root,
+#paintbrush-people-root,
+#paintbrush-grades-root,
+#paintbrush-home-root,
+#paintbrush-discussion-list-root {
+  all: initial;
+}
+
+/* ------------------------------------------------------
+   Dark mode (when Canvas itself uses dark mode classes)
+   ------------------------------------------------------ */
+
+@media (prefers-color-scheme: dark) {
+  table.ic-Table,
+  .roster.ic-Table {
+    border-color: rgb(39 39 42) !important; /* zinc-800 */
+  }
+  table.ic-Table thead th,
+  .roster.ic-Table thead th {
+    background: rgb(24 24 27) !important; /* zinc-900 */
+    border-bottom-color: rgb(39 39 42) !important;
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="url"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select {
+    border-color: rgb(39 39 42) !important;
+  }
+}
