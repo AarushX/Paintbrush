@@ -11,6 +11,10 @@ import { mountAnnouncementList } from './announcement/inject';
 import { isModulesListPage, isPeoplePage } from '../lib/course-context';
 import { mountModulesViewer } from './modules/inject';
 import { mountPeopleViewer } from './people/inject';
+// === grades/home additions ===
+import { isGradesPage, isCourseHomePage } from '../lib/course-context';
+import { mountGradesViewer } from './grades/inject';
+import { mountHomeViewer } from './home/inject';
 
 let unmount: (() => void) | null = null;
 
@@ -131,6 +135,46 @@ async function init() {
   syncModulesMount();
   syncPeopleMount();
 
+  // === grades/home additions ===
+  let gradesCleanup: (() => void) | null = null;
+  let lastGradesKey: string | null = null;
+  function syncGradesMount() {
+    let key: string | null = null;
+    if (isGradesPage(location.href)) {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) key = String(cid);
+    }
+    if (key === lastGradesKey) return;
+    if (gradesCleanup) { gradesCleanup(); gradesCleanup = null; }
+    lastGradesKey = key;
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) gradesCleanup = mountGradesViewer(cid);
+    });
+  }
+
+  let homeCleanup: (() => void) | null = null;
+  let lastHomeKey: string | null = null;
+  function syncHomeMount() {
+    let key: string | null = null;
+    if (isCourseHomePage(location.href)) {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) key = String(cid);
+    }
+    if (key === lastHomeKey) return;
+    if (homeCleanup) { homeCleanup(); homeCleanup = null; }
+    lastHomeKey = key;
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) homeCleanup = mountHomeViewer(cid);
+    });
+  }
+
+  syncGradesMount();
+  syncHomeMount();
+
   // Re-check on SPA navigation (Canvas changes URLs without full reload)
   let lastUrl = location.href;
   setInterval(() => {
@@ -141,6 +185,8 @@ async function init() {
       syncAnnouncementMount();
       syncModulesMount();
       syncPeopleMount();
+      syncGradesMount();
+      syncHomeMount();
     }
   }, 500);
 

@@ -58,3 +58,14 @@ export function isPeoplePage(url: string): boolean {
   // Canvas uses /users for the people page
   return /\/courses\/\d+\/users\/?(\?|$)/.test(url);
 }
+
+// === grades/home additions ===
+
+export function isGradesPage(url: string): boolean {
+  return /\/courses\/\d+\/grades\/?(\?|$)/.test(url);
+}
+
+export function isCourseHomePage(url: string): boolean {
+  // Strictly the root /courses/:id (or /courses/:id/) — no further path segment
+  return /\/courses\/\d+\/?(\?|$)/.test(url) && !/\/courses\/\d+\/[a-z]/.test(url);
+}

@@ -265,3 +265,44 @@ export interface Section {
   id: number;
   name: string;
 }
+
+// === grades/home additions ===
+
+export interface EnrollmentScore {
+  id: number;
+  user_id: number;
+  type: string;
+  course_id?: number;
+  enrollment_state?: string;
+  computed_current_score?: number | null;
+  computed_current_grade?: string | null;
+  computed_final_score?: number | null;
+  computed_final_grade?: string | null;
+  current_period_computed_current_score?: number | null;
+  current_period_computed_current_grade?: string | null;
+}
+
+export interface AssignmentGroupWithScores {
+  id: number;
+  name: string;
+  position: number;
+  group_weight?: number;
+  assignments?: AssignmentListItem[];
+}
+
+export interface CourseWithMeta {
+  id: number;
+  name: string;
+  course_code: string;
+  term?: { id: number; name: string };
+  enrollments?: Array<{
+    type: string;
+    computed_current_score?: number | null;
+    computed_current_grade?: string | null;
+    computed_final_score?: number | null;
+    computed_final_grade?: string | null;
+  }>;
+  syllabus_body?: string | null;
+  apply_assignment_group_weights?: boolean;
+  image_download_url?: string | null;
+}

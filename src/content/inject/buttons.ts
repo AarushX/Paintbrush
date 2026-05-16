@@ -84,3 +84,6 @@ export function watchAndInject(button: ButtonConfig, predicate: () => boolean): 
 
 // === modules/people additions ===
 export { isFilesPage, isModulesPage, isCourseRootPage, isDiscussionPage, parseAssignmentFromUrl, isAssignmentDetailPage, isAssignmentListPage, isAnnouncementsListPage, isModulesListPage, isPeoplePage };
+
+// === grades/home additions ===
+export { isGradesPage, isCourseHomePage } from '../../lib/course-context';
