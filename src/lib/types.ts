@@ -163,3 +163,47 @@ export interface DiscussionViewFull {
   view: DiscussionEntryFull[];
   new_entries?: DiscussionEntryFull[];
 }
+
+export interface Submission {
+  id: number;
+  workflow_state: 'submitted' | 'graded' | 'unsubmitted' | 'pending_review' | string;
+  score: number | null;
+  grade: string | null;
+  submitted_at: string | null;
+  late: boolean;
+  missing: boolean;
+  excused: boolean;
+  attempt: number | null;
+  preview_url?: string;
+}
+
+export interface AssignmentFull extends Assignment {
+  course_id?: number;
+  has_submitted_submissions?: boolean;
+  submission?: Submission;
+  unlock_at?: string | null;
+  lock_at?: string | null;
+  allowed_extensions?: string[];
+  is_quiz_assignment?: boolean;
+  locked_for_user?: boolean;
+}
+
+export interface AssignmentListItem {
+  id: number;
+  name: string;
+  due_at: string | null;
+  points_possible: number;
+  html_url: string;
+  submission_types: string[];
+  has_submitted_submissions: boolean;
+  submission?: Submission;
+  position?: number;
+  assignment_group_id?: number;
+}
+
+export interface AssignmentGroup {
+  id: number;
+  name: string;
+  position: number;
+  assignments?: AssignmentListItem[];
+}

@@ -28,3 +28,22 @@ export function parseDiscussionFromUrl(url: string): { courseId: number; topicId
 export function isDiscussionPage(url: string): boolean {
   return parseDiscussionFromUrl(url) !== null;
 }
+
+export function parseAssignmentFromUrl(url: string): { courseId: number; assignmentId: number } | null {
+  const m = url.match(/\/courses\/(\d+)\/assignments\/(\d+)(?:\/|\?|$)/);
+  if (!m) return null;
+  return { courseId: Number(m[1]), assignmentId: Number(m[2]) };
+}
+
+export function isAssignmentDetailPage(url: string): boolean {
+  return parseAssignmentFromUrl(url) !== null;
+}
+
+export function isAssignmentListPage(url: string): boolean {
+  // /courses/:id/assignments or /courses/:id/assignments/ (no further segment)
+  return /\/courses\/\d+\/assignments\/?(\?|$)/.test(url);
+}
+
+export function isAnnouncementsListPage(url: string): boolean {
+  return /\/courses\/\d+\/announcements\/?(\?|$)/.test(url);
+}

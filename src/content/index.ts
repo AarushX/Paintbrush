@@ -3,8 +3,10 @@ import { watchAndInject, isFilesPage, isModulesPage, isCourseRootPage } from './
 import { downloadAllFiles } from './downloader/files';
 import { exportModules } from './downloader/modules';
 import { exportEntireCourse } from './downloader/course';
-import { parseDiscussionFromUrl } from '../lib/course-context';
+import { parseDiscussionFromUrl, parseCourseFromUrl, parseAssignmentFromUrl, isAssignmentListPage, isAnnouncementsListPage } from '../lib/course-context';
 import { mountDiscussionViewer } from './discussion/inject';
+import { mountAssignmentViewer } from './assignment/inject';
+import { mountAnnouncementList } from './announcement/inject';
 
 let unmount: (() => void) | null = null;
 
@@ -33,13 +35,64 @@ async function init() {
     }
   }
 
+  let assignmentCleanup: (() => void) | null = null;
+  let lastAssignmentKey: string | null = null;
+
+  function syncAssignmentMount() {
+    const detail = parseAssignmentFromUrl(location.href);
+    let key: string | null = null;
+    if (detail) key = `detail:${detail.courseId}:${detail.assignmentId}`;
+    else if (isAssignmentListPage(location.href)) {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) key = `list:${cid}`;
+    }
+    if (key === lastAssignmentKey) return;
+    if (assignmentCleanup) { assignmentCleanup(); assignmentCleanup = null; }
+    lastAssignmentKey = key;
+    if (!key) return;
+    requestAnimationFrame(() => {
+      if (detail) {
+        assignmentCleanup = mountAssignmentViewer({ kind: 'detail', courseId: detail.courseId, assignmentId: detail.assignmentId });
+      } else {
+        const cid = parseCourseFromUrl(location.href);
+        if (cid != null) {
+          assignmentCleanup = mountAssignmentViewer({ kind: 'list', courseId: cid });
+        }
+      }
+    });
+  }
+
+  let announcementCleanup: (() => void) | null = null;
+  let lastAnnouncementKey: string | null = null;
+
+  function syncAnnouncementMount() {
+    let key: string | null = null;
+    if (isAnnouncementsListPage(location.href)) {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) key = `${cid}`;
+    }
+    if (key === lastAnnouncementKey) return;
+    if (announcementCleanup) { announcementCleanup(); announcementCleanup = null; }
+    lastAnnouncementKey = key;
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) announcementCleanup = mountAnnouncementList(cid);
+    });
+  }
+
   syncDiscussionMount();
+  syncAssignmentMount();
+  syncAnnouncementMount();
+
   // Re-check on SPA navigation (Canvas changes URLs without full reload)
   let lastUrl = location.href;
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       syncDiscussionMount();
+      syncAssignmentMount();
+      syncAnnouncementMount();
     }
   }, 500);
 
