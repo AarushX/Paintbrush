@@ -41,18 +41,30 @@ export function mountHomeViewer(courseId: number): () => void {
   }
 
   const container = findContainer();
-  console.log('[Paintbrush] home anchor =', container?.id ?? container?.tagName ?? 'null', 'parent =', container?.parentNode?.nodeName);
   const prevDisplay = container?.style.display ?? '';
   if (container) container.style.display = 'none';
 
+  // Anchor the host as a fixed-position overlay covering the viewport from
+  // the right edge of Canvas's global nav (~84px) to the left edge of our
+  // Paintbrush sidebar. This bypasses Canvas's DOM entirely — the host
+  // can't be hidden by Canvas wrapping it in a display:none ancestor.
   const host = document.createElement('div');
   host.id = HOST_ID;
-  host.style.cssText = 'all: initial; display: block; position: relative; width: 100%; min-height: 100vh; pointer-events: auto;';
-  if (container && container.parentNode) {
-    container.parentNode.insertBefore(host, container);
-  } else {
-    document.body.appendChild(host);
-  }
+  host.style.cssText = [
+    'all: initial',
+    'display: block',
+    'position: fixed',
+    'top: 0',
+    'left: 84px',
+    'right: 0',
+    'bottom: 0',
+    'overflow-y: auto',
+    'background: #fafafa',
+    'z-index: 100',
+    'pointer-events: auto'
+  ].join(';');
+  document.body.appendChild(host);
+  console.log('[Paintbrush] home host appended to body');
 
   const shadow = host.attachShadow({ mode: 'open' });
   const styleEl = document.createElement('style');
