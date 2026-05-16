@@ -267,6 +267,8 @@
   position: relative;
   border-left: 0 !important;
   font-weight: 500 !important;
+  text-decoration: none !important;
+  color: rgb(63 63 70) !important; /* zinc-700 — Canvas's default blue is gone */
   /* Keep items to a single line so the active state doesn't reflow the width
      when bolder/heavier styling is applied. Hide overflow with ellipsis. */
   white-space: nowrap !important;
@@ -278,6 +280,7 @@
 .ic-app-course-menu li a:hover {
   background-color: color-mix(in srgb, var(--pb-brand) 8%, transparent) !important;
   color: var(--pb-brand-strong) !important;
+  text-decoration: none !important;
 }
 
 /* Active state stays at the SAME font-weight to avoid optical width shift.
@@ -617,4 +620,20 @@ body:has(#paintbrush-dashboard-root) .ic-DashboardCard { all: revert; }
 *:focus-visible {
   outline: 2px solid var(--pb-brand) !important;
   outline-offset: 2px !important;
+}
+
+/* ------------------------------------------------------
+   Hide redundant in-page nav widgets we don't need.
+   The "Syllabus Navigation" mini-menu is a Canvas legacy
+   widget that overlaps the breadcrumb on the syllabus
+   page — the actual links (Instructor, TAs, Course Info)
+   are already part of the syllabus body itself.
+   ------------------------------------------------------ */
+
+#syllabus_navigation,
+#syllabus_nav,
+.syllabus-navigation,
+.syllabus_navigation,
+[aria-label="Syllabus Navigation" i] {
+  display: none !important;
 }
