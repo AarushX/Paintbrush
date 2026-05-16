@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Paintbrush for Canvas",
+  "version": "0.1.0",
+  "description": "Todos sidebar and bulk download for Canvas LMS.",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["*://*.instructure.com/*"],
+  "optional_host_permissions": ["*://*/*"],
+  "icons": {
+    "16": "public/icons/icon-16.png",
+    "32": "public/icons/icon-32.png",
+    "48": "public/icons/icon-48.png",
+    "128": "public/icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Toggle Paintbrush sidebar",
+    "default_icon": {
+      "16": "public/icons/icon-16.png",
+      "32": "public/icons/icon-32.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.instructure.com/*"],
+      "js": ["src/content/index.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "src/options/index.html"
+}
