@@ -11,7 +11,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["chrome", "svelte", "vitest/globals"],
+    "types": ["chrome", "svelte", "vitest/globals", "node"],
     "baseUrl": ".",
     "paths": {
       "$lib/*": ["src/lib/*"]

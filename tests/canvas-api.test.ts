@@ -26,7 +26,8 @@ describe('fetchAllPages', () => {
       ['/api/v1/things?per_page=2&page=3', { body: [5], next: null }]
     ]);
 
-    const fakeFetch = async (url: string) => {
+    const fakeFetch = async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       const r = responses.get(url);
       if (!r) throw new Error('unexpected url ' + url);
       return new Response(JSON.stringify(r.body), {

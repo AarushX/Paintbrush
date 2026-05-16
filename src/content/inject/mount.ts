@@ -24,6 +24,13 @@ export async function mountSidebar(): Promise<() => void> {
   appRoot.style.cssText = 'pointer-events: auto;';
   shadow.appendChild(appRoot);
 
+  function applyDarkMode() {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    appRoot.classList.toggle('dark', isDark);
+  }
+  applyDarkMode();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkMode);
+
   const defaultOpen = await getLocal('sidebarDefaultOpen');
   const app = mount(Sidebar, { target: appRoot, props: { open: defaultOpen } });
 
