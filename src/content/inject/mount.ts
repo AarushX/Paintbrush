@@ -5,6 +5,30 @@ import { getLocal } from '../../lib/storage';
 
 const HOST_ID = 'paintbrush-root';
 
+// Sniff the active Canvas brand color from the left global nav so our sidebar
+// looks like a sibling of it (matches institution theming when applied).
+function detectCanvasBrand(): { brand: string; brandFg: string } | null {
+  const candidates = ['.ic-app-header', '#header', '#mobile-header'];
+  for (const sel of candidates) {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (!el) continue;
+    const bg = getComputedStyle(el).backgroundColor;
+    const m = bg.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (!m) continue;
+    const r = Number(m[1]);
+    const g = Number(m[2]);
+    const b = Number(m[3]);
+    // Skip transparent / near-white (Canvas theme JS may not be applied yet).
+    const lum = r * 0.299 + g * 0.587 + b * 0.114;
+    if (lum > 235) continue;
+    return {
+      brand: `rgb(${r}, ${g}, ${b})`,
+      brandFg: lum < 140 ? '#ffffff' : '#1a1a1a'
+    };
+  }
+  return null;
+}
+
 export async function mountSidebar(): Promise<() => void> {
   if (document.getElementById(HOST_ID)) {
     return () => {}; // already mounted
@@ -23,6 +47,19 @@ export async function mountSidebar(): Promise<() => void> {
   const appRoot = document.createElement('div');
   appRoot.style.cssText = 'pointer-events: auto;';
   shadow.appendChild(appRoot);
+
+  function applyBrand() {
+    const detected = detectCanvasBrand();
+    const brand = detected?.brand ?? '#4f46e5';
+    const brandFg = detected?.brandFg ?? '#ffffff';
+    appRoot.style.setProperty('--pb-brand', brand);
+    appRoot.style.setProperty('--pb-brand-fg', brandFg);
+    appRoot.style.setProperty('--pb-brand-soft', `color-mix(in srgb, ${brand} 12%, transparent)`);
+    appRoot.style.setProperty('--pb-brand-strong', `color-mix(in srgb, ${brand} 80%, black)`);
+  }
+  applyBrand();
+  // Canvas applies theme CSS late on some pages — re-check shortly after mount.
+  setTimeout(applyBrand, 800);
 
   function applyDarkMode() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
