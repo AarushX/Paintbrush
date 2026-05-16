@@ -1,5 +1,6 @@
 import { mountSidebar } from './inject/mount';
 import { watchAndInject, isFilesPage, isModulesPage } from './inject/buttons';
+import { downloadAllFiles } from './downloader/files';
 
 let unmount: (() => void) | null = null;
 
@@ -10,10 +11,7 @@ async function init() {
     {
       id: 'paintbrush-download-files-btn',
       label: '⬇ Download all files (.zip)',
-      onClick: (courseId) => {
-        console.log('[Paintbrush] files download requested for course', courseId);
-        alert('Files download coming next task.');
-      }
+      onClick: (courseId) => downloadAllFiles(courseId)
     },
     () => isFilesPage(location.href)
   );
