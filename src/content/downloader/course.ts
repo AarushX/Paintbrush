@@ -256,8 +256,17 @@ export async function exportEntireCourse(courseId: number): Promise<void> {
     const filesPending: Array<{ file: CanvasFile; path: string }> = [];
     for (const f of folders) {
       const folderPath = pathByFolder.get(f.id) ?? '';
-      const inFolder = await fetchFilesForFolder(f.id, controller.signal);
-      for (const file of inFolder) filesPending.push({ file, path: folderPath });
+      try {
+        const inFolder = await fetchFilesForFolder(f.id, controller.signal);
+        for (const file of inFolder) filesPending.push({ file, path: folderPath });
+      } catch (err) {
+        // 403 on a locked/restricted folder is common — skip and record.
+        stats.failures.push({
+          section: 'files',
+          item: folderPath || f.name || `folder-${f.id}`,
+          reason: err instanceof Error ? err.message : String(err)
+        });
+      }
     }
     progress.update({ title: 'Downloading files…', total: filesPending.length, completed: 0 });
     let filesDone = 0;

@@ -74,8 +74,16 @@ export async function downloadAllFiles(courseId: number): Promise<void> {
     const pending: PendingFile[] = [];
     for (const f of folders) {
       const folderPath = pathByFolder.get(f.id) ?? '';
-      const files = await fetchFilesForFolder(f.id, controller.signal);
-      for (const file of files) pending.push({ file, folderPath });
+      try {
+        const files = await fetchFilesForFolder(f.id, controller.signal);
+        for (const file of files) pending.push({ file, folderPath });
+      } catch (err) {
+        // 403 on a locked/restricted folder is common — skip and record.
+        failures.push({
+          name: folderPath || f.name || `folder-${f.id}`,
+          reason: err instanceof Error ? err.message : String(err)
+        });
+      }
     }
 
     const zip = createZip();
