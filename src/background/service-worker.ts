@@ -1,3 +1,9 @@
+// chrome.storage.session is gated to trusted contexts by default; opening it
+// to content scripts is required for our planner cache.
+chrome.storage.session
+  .setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' })
+  .catch(() => {});
+
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
   try {
