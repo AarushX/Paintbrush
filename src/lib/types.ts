@@ -207,3 +207,61 @@ export interface AssignmentGroup {
   position: number;
   assignments?: AssignmentListItem[];
 }
+
+// === modules/people additions ===
+
+export interface ModuleItemFull {
+  id: number;
+  title: string;
+  position: number;
+  indent?: number;
+  type: 'File' | 'Page' | 'Assignment' | 'Quiz' | 'Discussion' | 'ExternalUrl' | 'ExternalTool' | 'SubHeader';
+  content_id?: number;
+  page_url?: string;
+  external_url?: string;
+  html_url?: string;
+  completion_requirement?: { type: string; min_score?: number; completed?: boolean };
+  content_details?: {
+    points_possible?: number;
+    due_at?: string;
+    locked_for_user?: boolean;
+    lock_explanation?: string;
+  };
+}
+
+export interface ModuleFull {
+  id: number;
+  name: string;
+  position: number;
+  state?: 'locked' | 'unlocked' | 'started' | 'completed';
+  completed_at?: string | null;
+  prerequisite_module_ids?: number[];
+  items?: ModuleItemFull[];
+  items_count?: number;
+}
+
+export interface CanvasUser {
+  id: number;
+  name: string;
+  short_name?: string;
+  sortable_name?: string;
+  avatar_url?: string;
+  email?: string;
+  bio?: string;
+  pronouns?: string;
+  enrollments?: Array<{
+    id: number;
+    type: 'StudentEnrollment' | 'TeacherEnrollment' | 'TaEnrollment' | 'DesignerEnrollment' | 'ObserverEnrollment' | string;
+    role?: string;
+    role_id?: number;
+    enrollment_state?: 'active' | 'invited' | 'inactive' | string;
+    last_activity_at?: string | null;
+    section_id?: number;
+    course_section_id?: number;
+  }>;
+}
+
+export interface Section {
+  id: number;
+  name: string;
+}

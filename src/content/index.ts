@@ -7,6 +7,10 @@ import { parseDiscussionFromUrl, parseCourseFromUrl, parseAssignmentFromUrl, isA
 import { mountDiscussionViewer } from './discussion/inject';
 import { mountAssignmentViewer } from './assignment/inject';
 import { mountAnnouncementList } from './announcement/inject';
+// === modules/people additions ===
+import { isModulesListPage, isPeoplePage } from '../lib/course-context';
+import { mountModulesViewer } from './modules/inject';
+import { mountPeopleViewer } from './people/inject';
 
 let unmount: (() => void) | null = null;
 
@@ -85,6 +89,48 @@ async function init() {
   syncAssignmentMount();
   syncAnnouncementMount();
 
+  // === modules/people additions ===
+  let modulesCleanup: (() => void) | null = null;
+  let lastModulesKey: string | null = null;
+
+  function syncModulesMount() {
+    let key: string | null = null;
+    if (isModulesListPage(location.href)) {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) key = String(cid);
+    }
+    if (key === lastModulesKey) return;
+    if (modulesCleanup) { modulesCleanup(); modulesCleanup = null; }
+    lastModulesKey = key;
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) modulesCleanup = mountModulesViewer(cid);
+    });
+  }
+
+  let peopleCleanup: (() => void) | null = null;
+  let lastPeopleKey: string | null = null;
+
+  function syncPeopleMount() {
+    let key: string | null = null;
+    if (isPeoplePage(location.href)) {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) key = String(cid);
+    }
+    if (key === lastPeopleKey) return;
+    if (peopleCleanup) { peopleCleanup(); peopleCleanup = null; }
+    lastPeopleKey = key;
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) peopleCleanup = mountPeopleViewer(cid);
+    });
+  }
+
+  syncModulesMount();
+  syncPeopleMount();
+
   // Re-check on SPA navigation (Canvas changes URLs without full reload)
   let lastUrl = location.href;
   setInterval(() => {
@@ -93,6 +139,8 @@ async function init() {
       syncDiscussionMount();
       syncAssignmentMount();
       syncAnnouncementMount();
+      syncModulesMount();
+      syncPeopleMount();
     }
   }, 500);
 

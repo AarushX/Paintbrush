@@ -47,3 +47,14 @@ export function isAssignmentListPage(url: string): boolean {
 export function isAnnouncementsListPage(url: string): boolean {
   return /\/courses\/\d+\/announcements\/?(\?|$)/.test(url);
 }
+
+// === modules/people additions ===
+
+export function isModulesListPage(url: string): boolean {
+  return /\/courses\/\d+\/modules\/?(\?|$)/.test(url);
+}
+
+export function isPeoplePage(url: string): boolean {
+  // Canvas uses /users for the people page
+  return /\/courses\/\d+\/users\/?(\?|$)/.test(url);
+}
