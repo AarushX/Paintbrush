@@ -17,6 +17,11 @@
   let preview = $state(false);
   let textarea: HTMLTextAreaElement | undefined = $state();
 
+  // Auto-focus the textarea when the composer mounts so the user can type immediately.
+  $effect(() => {
+    if (textarea) textarea.focus();
+  });
+
   function wrap(prefix: string, suffix: string = prefix) {
     if (!textarea) return;
     const start = textarea.selectionStart;

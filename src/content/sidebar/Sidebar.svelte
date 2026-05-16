@@ -17,9 +17,31 @@
     const w = sidebarState.open ? EXPANDED_W : RAIL_W;
     document.body.style.transition = 'padding-right 300ms cubic-bezier(0.22,0.61,0.36,1)';
     document.body.style.paddingRight = `${w}px`;
+    // Suppress horizontal overflow so fixed-width Canvas widgets don't poke past
+    // the shrunk body boundary (e.g. full-bleed banners, gradebook toolbar).
+    const prevOverflowX = document.documentElement.style.overflowX;
+    document.documentElement.style.overflowX = 'hidden';
+
+    // Push any Canvas right-anchored fixed/absolute elements inward so they
+    // don't collide with our sidebar (e.g. #right-side-wrapper on dashboard).
+    const canvasRightFixed = document.querySelectorAll<HTMLElement>(
+      '#right-side-wrapper, #right-side, .fixed-right'
+    );
+    for (const el of canvasRightFixed) {
+      const pos = getComputedStyle(el).position;
+      if (pos !== 'fixed' && pos !== 'absolute') continue;
+      el.style.transition = 'right 300ms cubic-bezier(0.22,0.61,0.36,1)';
+      el.style.right = `${w}px`;
+    }
+
     return () => {
       document.body.style.paddingRight = '';
       document.body.style.transition = '';
+      document.documentElement.style.overflowX = prevOverflowX;
+      for (const el of canvasRightFixed) {
+        el.style.right = '';
+        el.style.transition = '';
+      }
     };
   });
 
@@ -149,6 +171,7 @@
     onclick={() => sidebarState.open = true}
     class="fixed top-0 h-screen z-[2147483647] flex items-center justify-center transition-[width,box-shadow] duration-200 ease-out group"
     aria-label="Expand Paintbrush sidebar"
+    title="Expand Paintbrush sidebar"
     style="right: var(--pb-scrollbar-w, 0px); width: 14px; background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: inset 2px 0 0 color-mix(in srgb, var(--pb-brand-fg) 12%, transparent), -2px 0 18px color-mix(in srgb, var(--pb-brand) 22%, transparent);"
     onmouseenter={(e) => (e.currentTarget.style.width = '20px')}
     onmouseleave={(e) => (e.currentTarget.style.width = '14px')}>

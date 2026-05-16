@@ -68,12 +68,27 @@ export async function mountSidebar(): Promise<() => void> {
   applyDarkMode();
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkMode);
 
-  // Offset the sidebar past the page's vertical scrollbar so the rail stays clickable.
+  // Measure scrollbar width once using a synthetic element so the measurement
+  // is not affected by any body padding we apply later (avoids a feedback loop
+  // where padding-right changes clientWidth which re-triggers offset changes).
+  function measureScrollbarWidth(): number {
+    const outer = document.createElement('div');
+    outer.style.cssText = 'visibility:hidden;overflow:scroll;width:50px;position:absolute;top:-9999px;';
+    outer.innerHTML = '<div style="width:100%;height:100px;"></div>';
+    document.body.appendChild(outer);
+    const inner = outer.firstElementChild as HTMLElement;
+    const w = outer.offsetWidth - inner.offsetWidth;
+    outer.remove();
+    return Math.max(0, w);
+  }
+
   function applyScrollbarOffset() {
-    const w = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    const w = measureScrollbarWidth();
     appRoot.style.setProperty('--pb-scrollbar-w', `${w}px`);
   }
   applyScrollbarOffset();
+  // Re-measure on resize to catch OS scrollbar style changes (e.g. switching
+  // between "Always show" and "When scrolling" in macOS System Preferences).
   window.addEventListener('resize', applyScrollbarOffset);
   const scrollbarRO = new ResizeObserver(applyScrollbarOffset);
   scrollbarRO.observe(document.documentElement);

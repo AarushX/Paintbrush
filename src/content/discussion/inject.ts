@@ -75,6 +75,7 @@ export function mountDiscussionViewer(courseId: number, topicId: number): () => 
     appRoot.style.setProperty('--pb-brand-fg', brandFg);
     appRoot.style.setProperty('--pb-brand-soft', `color-mix(in srgb, ${brand} 12%, transparent)`);
     appRoot.style.setProperty('--pb-brand-strong', `color-mix(in srgb, ${brand} 80%, black)`);
+    appRoot.style.setProperty('--pb-scrollbar-w', `${Math.max(0, window.innerWidth - document.documentElement.clientWidth)}px`);
   }
   applyBrand();
   setTimeout(applyBrand, 800);

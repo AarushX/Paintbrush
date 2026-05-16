@@ -53,10 +53,10 @@
 .ic-app-header__menu-list-link[aria-current="page"]::before {
   content: '';
   position: absolute;
-  left: -2px;
+  left: 4px;
   top: 14px;
   bottom: 14px;
-  width: 3px;
+  width: 2px;
   border-radius: 2px;
   background: var(--pb-brand-fg);
   opacity: 0.85;
@@ -386,4 +386,52 @@ table.ic-Table thead th,
   select {
     border-color: rgb(39 39 42) !important;
   }
+}
+
+/* ------------------------------------------------------
+   3b. RCE / TinyMCE editor input reset
+   Our generic input overrides break TinyMCE's internal
+   inputs. Revert them inside editor containers.
+   ------------------------------------------------------ */
+
+.tox input, .tox textarea, .tox select,
+.mce-content-body input, .mce-content-body textarea, .mce-content-body select,
+.rce-wrapper input, .rce-wrapper textarea, .rce-wrapper select,
+[data-rce] input, [data-rce] textarea, [data-rce] select {
+  border-radius: revert !important;
+  border-color: revert !important;
+  box-shadow: revert !important;
+}
+
+/* ------------------------------------------------------
+   3c. Dashboard guard
+   When Paintbrush's dashboard viewer is active, leave
+   Canvas's own cards alone — they are hidden anyway and
+   fighting styles causes layout artifacts on revert.
+   ------------------------------------------------------ */
+
+body:has(#paintbrush-dashboard-root) .ic-DashboardCard { all: revert; }
+
+/* ------------------------------------------------------
+   3d. Modal dialog button sizing
+   Buttons inside .ui-dialog-buttonpane were getting
+   clipped by overflow on the pane. Give them explicit
+   padding and radius that fit within the dialog chrome.
+   ------------------------------------------------------ */
+
+.ui-dialog .ui-dialog-buttonpane button {
+  border-radius: var(--pb-radius-md) !important;
+  padding: 6px 14px !important;
+  margin: 0 4px !important;
+}
+
+/* ------------------------------------------------------
+   3e. Keyboard focus rings
+   Ensure accessible focus styling for keyboard nav.
+   Scoped to :focus-visible so mouse users aren't affected.
+   ------------------------------------------------------ */
+
+*:focus-visible {
+  outline: 2px solid var(--pb-brand) !important;
+  outline-offset: 2px !important;
 }
