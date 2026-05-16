@@ -6,6 +6,8 @@ import { exportModules } from './downloader/modules';
 let unmount: (() => void) | null = null;
 
 async function init() {
+  if (location.pathname.startsWith('/login')) return;
+
   unmount = await mountSidebar();
 
   watchAndInject(

@@ -31,7 +31,11 @@ export async function refresh() {
     sidebarState.lastSyncedAt = Date.now();
     await setCachedPlannerItems(items);
   } catch (err) {
-    sidebarState.error = err instanceof Error ? err.message : String(err);
+    if (err instanceof Error && 'status' in err && (err as { status: number }).status === 401) {
+      sidebarState.error = 'Sign back in to Canvas to refresh.';
+    } else {
+      sidebarState.error = err instanceof Error ? err.message : String(err);
+    }
   } finally {
     sidebarState.loading = false;
   }

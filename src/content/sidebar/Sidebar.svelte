@@ -53,12 +53,29 @@
     </div>
   </header>
 
+  <div class="flex items-center gap-1 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
+    {#each [
+      ['all', 'All'],
+      ['assignment', 'Asgn'],
+      ['quiz', 'Quiz'],
+      ['discussion_topic', 'Disc'],
+      ['planner_note', 'Notes']
+    ] as const as [value, label]}
+      <button
+        onclick={() => (sidebarState.filter = value)}
+        class={`px-2 py-0.5 text-[11px] rounded-full whitespace-nowrap transition-colors ${sidebarState.filter === value ? 'bg-indigo-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+      >
+        {label}
+      </button>
+    {/each}
+  </div>
+
   {#if sidebarState.error}
     <div class="p-3 text-xs text-red-600 dark:text-red-400">Error: {sidebarState.error}</div>
   {:else if totalCount() === 0 && !sidebarState.loading}
     <div class="p-8 text-center text-sm text-zinc-500">All caught up 🎉</div>
   {:else}
-    <div class="overflow-y-auto" style="height: calc(100vh - 53px);">
+    <div class="overflow-y-auto" style="height: calc(100vh - 90px);">
       {#each groupOrder as [key, label, color]}
         {#if groups[key].length > 0}
           <div class={`sticky top-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider ${color}`}>

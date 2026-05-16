@@ -1,4 +1,4 @@
-import { mount } from 'svelte';
+import { mount, unmount } from 'svelte';
 import Sidebar from '../sidebar/Sidebar.svelte';
 import tailwindCss from '../../styles/tailwind.css?inline';
 import { getLocal } from '../../lib/storage';
@@ -35,7 +35,8 @@ export async function mountSidebar(): Promise<() => void> {
   const app = mount(Sidebar, { target: appRoot, props: { open: defaultOpen } });
 
   return () => {
+    unmount(app);
     host.remove();
-    void app;
+    window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', applyDarkMode);
   };
 }
