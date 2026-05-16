@@ -1,6 +1,7 @@
 import { mountSidebar } from './inject/mount';
 import { watchAndInject, isFilesPage, isModulesPage } from './inject/buttons';
 import { downloadAllFiles } from './downloader/files';
+import { exportModules } from './downloader/modules';
 
 let unmount: (() => void) | null = null;
 
@@ -20,10 +21,7 @@ async function init() {
     {
       id: 'paintbrush-export-modules-btn',
       label: '⬇ Export modules (.zip)',
-      onClick: (courseId) => {
-        console.log('[Paintbrush] modules export requested for course', courseId);
-        alert('Modules export coming next task.');
-      }
+      onClick: (courseId) => exportModules(courseId)
     },
     () => isModulesPage(location.href)
   );
