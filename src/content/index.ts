@@ -192,6 +192,7 @@ async function init() {
       syncHomeMount();
       syncDiscussionListMount();
       syncDashboardMount();
+      syncCalendarMount();
     }
   }, 500);
 
@@ -275,3 +276,20 @@ function syncDashboardMount() {
 }
 
 syncDashboardMount();
+
+// === calendar additions ===
+import { isCalendarPage } from '../lib/course-context';
+import { mountCalendarViewer } from './calendar/inject';
+
+let calendarCleanup: (() => void) | null = null;
+let lastCalendarKey: string | null = null;
+function syncCalendarMount() {
+  const key = isCalendarPage(location.href) ? 'calendar' : null;
+  if (key === lastCalendarKey) return;
+  if (calendarCleanup) { calendarCleanup(); calendarCleanup = null; }
+  lastCalendarKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => { calendarCleanup = mountCalendarViewer(); });
+}
+
+syncCalendarMount();

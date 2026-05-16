@@ -89,3 +89,10 @@ export function isDashboardPage(url: string): boolean {
     return false;
   }
 }
+
+// === calendar additions ===
+
+export function isCalendarPage(url: string): boolean {
+  // /calendar or /calendar2 with optional query
+  return /\/calendar2?\/?(\?|$)/.test(new URL(url).pathname);
+}

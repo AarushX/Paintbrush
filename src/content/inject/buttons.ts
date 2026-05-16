@@ -93,3 +93,6 @@ export { isDiscussionsListPage } from '../../lib/course-context';
 
 // === dashboard additions ===
 export { isDashboardPage } from '../../lib/course-context';
+
+// === calendar additions ===
+export { isCalendarPage } from '../../lib/course-context';

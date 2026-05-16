@@ -362,3 +362,29 @@ export interface CourseWithMeta {
   apply_assignment_group_weights?: boolean;
   image_download_url?: string | null;
 }
+
+// === calendar additions ===
+
+export interface CalendarEvent {
+  id: number | string;
+  title: string;
+  start_at: string | null;
+  end_at: string | null;
+  all_day: boolean;
+  description?: string | null;
+  location_name?: string | null;
+  location_address?: string | null;
+  context_code: string; // "course_123" or "user_456"
+  context_name?: string;
+  workflow_state?: string;
+  url?: string;
+  html_url?: string;
+  type?: 'event' | 'assignment';
+  assignment?: {
+    id: number;
+    name: string;
+    points_possible: number | null;
+    due_at: string | null;
+    html_url: string;
+  };
+}
