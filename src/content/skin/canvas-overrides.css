@@ -89,36 +89,105 @@
 }
 
 /* ------------------------------------------------------
-   Slide-out navigation trays (Account / Courses / etc.)
-   Canvas renders these as fixed-position panels with
-   class `.navigation-tray-container` or similar.
+   Slide-out navigation trays (Account / Courses / Inbox / Help)
+   instructure-ui renders these via several DOM shapes — we
+   match all of them aggressively.
    ------------------------------------------------------ */
 
+/* Tray container — multiple selector shapes Canvas uses */
 .navigation-tray-container,
-[role="dialog"][aria-label*="Tray"],
-[data-cid="Tray"] {
+[data-cid="Tray"],
+[data-cid="Tray Position"] > span,
+[data-cid="Tray Position"] > div,
+span[role="dialog"][aria-label*="ray" i],
+div[role="dialog"][aria-label*="ray" i],
+aside[role="dialog"][aria-label*="ray" i],
+[role="dialog"][aria-label*="enu" i],
+[role="dialog"][aria-label*="ourses" i],
+[role="dialog"][aria-label*="ccount" i],
+[role="dialog"][aria-label*="nbox" i],
+[role="dialog"][aria-label*="elp" i],
+[role="dialog"][aria-label*="dmin" i] {
   border-right: 1px solid rgb(228 228 231) !important;
-  box-shadow: 4px 0 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) !important;
+  box-shadow: 8px 0 32px rgba(0,0,0,0.10), 1px 0 0 rgba(0,0,0,0.03) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(12px) !important;
 }
 
+/* Tray heading */
 .navigation-tray-container header,
-.navigation-tray-container .tray-with-space-for-global-nav,
-[role="dialog"][aria-label*="Tray"] h1,
-[role="dialog"][aria-label*="Tray"] h2 {
+.navigation-tray-container h2,
+[data-cid="Tray"] h2,
+[role="dialog"][aria-label*="ray" i] h1,
+[role="dialog"][aria-label*="ray" i] h2,
+[role="dialog"][aria-label*="ourses" i] h1,
+[role="dialog"][aria-label*="ourses" i] h2,
+[role="dialog"][aria-label*="ccount" i] h1,
+[role="dialog"][aria-label*="ccount" i] h2 {
   letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
 }
 
-/* Tray menu items — buttons / links inside */
+/* Tray inner links / buttons — modern hover */
 .navigation-tray-container a,
-.navigation-tray-container button {
+.navigation-tray-container button:not([type="submit"]):not(.btn-primary),
+[data-cid="Tray"] a,
+[data-cid="Tray"] li > a,
+[data-cid="Tray"] li > button,
+[role="dialog"][aria-label*="ray" i] a,
+[role="dialog"][aria-label*="ray" i] li > a,
+[role="dialog"][aria-label*="ray" i] li > button,
+[role="dialog"][aria-label*="ourses" i] a,
+[role="dialog"][aria-label*="ourses" i] li > a,
+[role="dialog"][aria-label*="ccount" i] a,
+[role="dialog"][aria-label*="ccount" i] li > a,
+[role="dialog"][aria-label*="elp" i] a,
+[role="dialog"][aria-label*="elp" i] li > a {
   border-radius: var(--pb-radius-sm) !important;
   transition: background-color 140ms ease, color 140ms ease !important;
+  border-left: 0 !important;
 }
 
 .navigation-tray-container a:hover,
-.navigation-tray-container button:hover {
+.navigation-tray-container button:not([type="submit"]):not(.btn-primary):hover,
+[data-cid="Tray"] a:hover,
+[data-cid="Tray"] li > a:hover,
+[data-cid="Tray"] li > button:hover,
+[role="dialog"][aria-label*="ray" i] a:hover,
+[role="dialog"][aria-label*="ray" i] li > a:hover,
+[role="dialog"][aria-label*="ray" i] li > button:hover,
+[role="dialog"][aria-label*="ourses" i] a:hover,
+[role="dialog"][aria-label*="ourses" i] li > a:hover,
+[role="dialog"][aria-label*="ccount" i] a:hover,
+[role="dialog"][aria-label*="ccount" i] li > a:hover,
+[role="dialog"][aria-label*="elp" i] a:hover,
+[role="dialog"][aria-label*="elp" i] li > a:hover {
   background-color: var(--pb-brand-soft) !important;
   color: var(--pb-brand-strong) !important;
+}
+
+/* List items inside trays — clean separators */
+[data-cid="Tray"] ul,
+[role="dialog"][aria-label*="ray" i] ul,
+.navigation-tray-container ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 4px 6px !important;
+}
+
+[data-cid="Tray"] li,
+[role="dialog"][aria-label*="ray" i] li,
+.navigation-tray-container li {
+  border: 0 !important;
+  margin: 1px 0 !important;
+}
+
+/* "Manage Courses" / "All Courses" type footer links — make subtle */
+[data-cid="Tray"] [class*="ic-NavigationTrayFooter"],
+[role="dialog"][aria-label*="ray" i] [class*="ic-NavigationTrayFooter"],
+.navigation-tray-container .ic-NavigationTrayFooter {
+  border-top: 1px solid rgb(228 228 231) !important;
+  padding: 8px !important;
 }
 
 /* ------------------------------------------------------
