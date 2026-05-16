@@ -866,7 +866,7 @@ describe('safeFilename', () => {
     expect(safeFilename('a/b\\c:d*e?f"g<h>i|j')).toBe('a_b_c_d_e_f_g_h_i_j');
   });
   it('strips control characters', () => {
-    expect(safeFilename('hello world')).toBe('helloworld');
+    expect(safeFilename('hello\u0001world')).toBe('helloworld');
   });
   it('trims trailing dots and spaces (Windows reserved)', () => {
     expect(safeFilename('hello. ')).toBe('hello');
