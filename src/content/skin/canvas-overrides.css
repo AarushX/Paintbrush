@@ -90,18 +90,31 @@
 
 /* ------------------------------------------------------
    Slide-out navigation trays (Account / Courses / Inbox / Help)
-   IMPORTANT: do NOT style the tray container — instructure-ui
-   positions and sizes those at runtime, and overriding
-   background/border/height breaks the slide-in animation and
-   collapses the panel. We only restyle items INSIDE the
-   .navigation-tray-container (the one Canvas-specific class
-   that is unambiguously a nav tray).
+   Only scope to .navigation-tray-container — the explicit
+   Canvas-only class. Layout properties (width/height/position)
+   are left untouched; we style background, border-right, and
+   inner content only.
    ------------------------------------------------------ */
+
+.navigation-tray-container {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border-right: 1px solid rgb(228 228 231) !important;
+  box-shadow: 8px 0 28px rgba(0,0,0,0.08) !important;
+  backdrop-filter: blur(10px) saturate(150%) !important;
+}
+
+.navigation-tray-container h2,
+.navigation-tray-container [class*="ic-NavigationTrayHeader"] {
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+  padding: 16px 18px 10px !important;
+  border-bottom: 1px solid rgb(228 228 231) !important;
+}
 
 .navigation-tray-container ul {
   list-style: none !important;
   margin: 0 !important;
-  padding: 4px 6px !important;
+  padding: 6px 8px !important;
 }
 
 .navigation-tray-container li {
@@ -110,25 +123,96 @@
 }
 
 .navigation-tray-container li > a,
-.navigation-tray-container li > button {
+.navigation-tray-container li > button,
+.navigation-tray-container [class*="ic-NavigationTrayCourse__Link"],
+.navigation-tray-container [class*="ic-NavigationTray"] a {
   border-radius: var(--pb-radius-sm) !important;
   transition: background-color 140ms ease, color 140ms ease !important;
   border-left: 0 !important;
+  padding: 8px 10px !important;
+  display: block !important;
+  font-weight: 500 !important;
 }
 
 .navigation-tray-container li > a:hover,
-.navigation-tray-container li > button:hover {
+.navigation-tray-container li > button:hover,
+.navigation-tray-container [class*="ic-NavigationTrayCourse__Link"]:hover,
+.navigation-tray-container [class*="ic-NavigationTray"] a:hover {
   background-color: var(--pb-brand-soft) !important;
   color: var(--pb-brand-strong) !important;
 }
 
-.navigation-tray-container h2 {
-  letter-spacing: -0.005em !important;
-  font-weight: 600 !important;
+.navigation-tray-container .ic-NavigationTrayFooter,
+.navigation-tray-container [class*="NavigationTrayFooter"] {
+  border-top: 1px solid rgb(228 228 231) !important;
+  padding: 10px 14px !important;
 }
 
-.navigation-tray-container .ic-NavigationTrayFooter {
-  border-top: 1px solid rgb(228 228 231) !important;
+/* ------------------------------------------------------
+   Hide Canvas's redundant To-Do / Coming Up / Recent Feedback
+   widgets across the whole site. Our sidebar surfaces this
+   data already, so leaving Canvas's versions visible is just
+   noise.
+   ------------------------------------------------------ */
+
+/* Planner-based dashboard "To Do" sidebar */
+#planner-todo-sidebar,
+.todo-list-header,
+.todo-list,
+.coming_up,
+.recent_feedback,
+.events_list,
+[data-testid="planner-todo-list"],
+[data-testid="todo-list"],
+[data-testid="recent-feedback"],
+[aria-label="To Do" i],
+[aria-labelledby*="to_do" i],
+[aria-labelledby*="todo" i] {
+  display: none !important;
+}
+
+/* Canvas dashboard's school logo block + the To-Do panel container */
+#right-side > #planner-todo-sidebar,
+#right-side > .todo-list,
+#right-side > #dashboard_sidebar,
+#right-side > .coming_up,
+#right-side > .recent_feedback {
+  display: none !important;
+}
+
+/* On the dashboard specifically, the "Recent Feedback" / "Coming Up"
+   wrapper headings become orphans after their children are hidden —
+   hide their h2 headings too. */
+#right-side h2:has(+ .todo-list),
+#right-side h2:has(+ .coming_up),
+#right-side h2:has(+ .recent_feedback) {
+  display: none !important;
+}
+
+/* ------------------------------------------------------
+   Canvas top header / school-logo region
+   This sits at the top of the left global nav.
+   ------------------------------------------------------ */
+
+.ic-app-header__logomark-container {
+  border-bottom: 1px solid color-mix(in srgb, var(--pb-brand-fg) 10%, transparent) !important;
+  padding: 12px 8px !important;
+  margin-bottom: 4px !important;
+}
+
+.ic-app-header__logomark {
+  transition: opacity 160ms ease !important;
+}
+
+.ic-app-header__logomark:hover {
+  opacity: 0.85 !important;
+}
+
+/* Avatar / profile button at top of nav (the user's headshot) */
+.ic-avatar,
+.ic-app-header__menu-list-link .ic-avatar {
+  border: 2px solid color-mix(in srgb, var(--pb-brand-fg) 14%, transparent) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
 }
 
 /* ------------------------------------------------------
