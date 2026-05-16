@@ -17,6 +17,9 @@
 
 /* ------------------------------------------------------
    Global left navigation (.ic-app-header)
+   Canvas's nav is narrow (~56–84px). Keep our overrides
+   to background + accent only; do NOT touch padding or
+   sizing so icons stay centered and don't clip.
    ------------------------------------------------------ */
 
 .ic-app-header {
@@ -25,46 +28,97 @@
 }
 
 .ic-app-header__menu-list {
-  padding: 6px 6px !important;
+  padding: 4px !important;
 }
 
 .ic-app-header__menu-list-item {
-  margin: 2px 0 !important;
+  margin: 1px 0 !important;
 }
 
 .ic-app-header__menu-list-link {
   border-radius: var(--pb-radius-md) !important;
-  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease !important;
-  padding: 10px 8px !important;
+  transition: background-color 160ms ease, color 160ms ease !important;
   border-left: 0 !important;
   position: relative;
+  /* Do NOT override padding here — Canvas sizes the link to fit its icon. */
 }
 
 .ic-app-header__menu-list-link:hover {
-  background-color: color-mix(in srgb, var(--pb-brand-fg) 10%, transparent) !important;
+  background-color: color-mix(in srgb, var(--pb-brand-fg) 12%, transparent) !important;
 }
 
+/* Active (current page) state */
 .ic-app-header__menu-list-link.ic-app-header__menu-list-link--active,
 .ic-app-header__menu-list-link[aria-current="page"] {
-  background-color: color-mix(in srgb, var(--pb-brand-fg) 14%, transparent) !important;
+  background-color: color-mix(in srgb, var(--pb-brand-fg) 18%, transparent) !important;
 }
 
+/* Tray-open / expanded state — Canvas adds `aria-expanded="true"` when a
+   slide-out tray is open. Make it visually distinct from idle. */
+.ic-app-header__menu-list-link[aria-expanded="true"] {
+  background-color: color-mix(in srgb, var(--pb-brand-fg) 22%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pb-brand-fg) 18%, transparent) !important;
+}
+
+/* The active accent bar — inset INSIDE the rounded background, not outside */
 .ic-app-header__menu-list-link.ic-app-header__menu-list-link--active::before,
-.ic-app-header__menu-list-link[aria-current="page"]::before {
+.ic-app-header__menu-list-link[aria-current="page"]::before,
+.ic-app-header__menu-list-link[aria-expanded="true"]::before {
   content: '';
   position: absolute;
-  left: 4px;
-  top: 14px;
-  bottom: 14px;
+  left: 3px;
+  top: 12px;
+  bottom: 12px;
   width: 2px;
   border-radius: 2px;
   background: var(--pb-brand-fg);
-  opacity: 0.85;
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .ic-app-header__menu-list-link .menu-item__text {
   letter-spacing: 0.02em;
   font-weight: 500 !important;
+}
+
+/* Ensure the SVG / icon inside isn't squished by anything else */
+.ic-app-header__menu-list-link .menu-item-icon-container,
+.ic-app-header__menu-list-link svg {
+  max-width: 100% !important;
+  flex-shrink: 0 !important;
+}
+
+/* ------------------------------------------------------
+   Slide-out navigation trays (Account / Courses / etc.)
+   Canvas renders these as fixed-position panels with
+   class `.navigation-tray-container` or similar.
+   ------------------------------------------------------ */
+
+.navigation-tray-container,
+[role="dialog"][aria-label*="Tray"],
+[data-cid="Tray"] {
+  border-right: 1px solid rgb(228 228 231) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) !important;
+}
+
+.navigation-tray-container header,
+.navigation-tray-container .tray-with-space-for-global-nav,
+[role="dialog"][aria-label*="Tray"] h1,
+[role="dialog"][aria-label*="Tray"] h2 {
+  letter-spacing: -0.005em !important;
+}
+
+/* Tray menu items — buttons / links inside */
+.navigation-tray-container a,
+.navigation-tray-container button {
+  border-radius: var(--pb-radius-sm) !important;
+  transition: background-color 140ms ease, color 140ms ease !important;
+}
+
+.navigation-tray-container a:hover,
+.navigation-tray-container button:hover {
+  background-color: var(--pb-brand-soft) !important;
+  color: var(--pb-brand-strong) !important;
 }
 
 /* ------------------------------------------------------

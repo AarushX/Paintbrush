@@ -116,6 +116,27 @@
     }
   }
 
+  // Canvas's longName is just shortName + " - " + courseCode; we already render
+  // the courseCode separately, so prefer originalName (the clean title) and fall
+  // back to stripping the trailing code from longName.
+  function displayName(card: DashboardCard): string {
+    const candidate = card.originalName ?? card.shortName ?? card.longName ?? '';
+    const code = card.courseCode ?? '';
+    if (code && candidate.endsWith(' - ' + code)) {
+      return candidate.slice(0, -(code.length + 3));
+    }
+    return candidate;
+  }
+
+  // Canvas often fills subtitle with "enrolled as: Student" — useless noise.
+  // Show the term if present, otherwise drop it entirely.
+  function displaySubtitle(card: DashboardCard): string {
+    const s = (card.subtitle ?? '').trim();
+    if (!s) return card.term ?? '';
+    if (/^enrolled as\b/i.test(s)) return card.term ?? '';
+    return s;
+  }
+
   // Group planner items: Overdue / Today / Tomorrow / This week (next 7 days)
   const grouped = $derived.by(() => {
     const now = new Date();
@@ -257,9 +278,9 @@
                   </div>
                   <div class="p-4">
                     <div class="text-[10px] uppercase tracking-[0.08em] text-zinc-400 mb-1 truncate">{card.courseCode}</div>
-                    <h3 class="text-sm font-semibold leading-snug line-clamp-2">{card.longName}</h3>
-                    {#if card.subtitle}
-                      <div class="text-[11px] text-zinc-500 mt-0.5">{card.subtitle}</div>
+                    <h3 class="text-sm font-semibold leading-snug line-clamp-2">{displayName(card)}</h3>
+                    {#if displaySubtitle(card)}
+                      <div class="text-[11px] text-zinc-500 mt-0.5 truncate">{displaySubtitle(card)}</div>
                     {/if}
                     {#if card.links && card.links.length > 0}
                       <div class="flex items-center gap-1 mt-3">
