@@ -3,6 +3,8 @@ import { watchAndInject, isFilesPage, isModulesPage, isCourseRootPage } from './
 import { downloadAllFiles } from './downloader/files';
 import { exportModules } from './downloader/modules';
 import { exportEntireCourse } from './downloader/course';
+import { parseDiscussionFromUrl } from '../lib/course-context';
+import { mountDiscussionViewer } from './discussion/inject';
 
 let unmount: (() => void) | null = null;
 
@@ -10,6 +12,36 @@ async function init() {
   if (location.pathname.startsWith('/login')) return;
 
   unmount = await mountSidebar();
+
+  let discussionCleanup: (() => void) | null = null;
+  let lastDiscussionKey: string | null = null;
+
+  function syncDiscussionMount() {
+    const ids = parseDiscussionFromUrl(location.href);
+    const key = ids ? `${ids.courseId}:${ids.topicId}` : null;
+    if (key === lastDiscussionKey) return;
+    if (discussionCleanup) {
+      discussionCleanup();
+      discussionCleanup = null;
+    }
+    lastDiscussionKey = key;
+    if (ids) {
+      // Wait one frame for Canvas's DOM to render its container, then take over.
+      requestAnimationFrame(() => {
+        discussionCleanup = mountDiscussionViewer(ids.courseId, ids.topicId);
+      });
+    }
+  }
+
+  syncDiscussionMount();
+  // Re-check on SPA navigation (Canvas changes URLs without full reload)
+  let lastUrl = location.href;
+  setInterval(() => {
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
+      syncDiscussionMount();
+    }
+  }, 500);
 
   watchAndInject(
     {

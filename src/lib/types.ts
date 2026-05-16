@@ -125,3 +125,41 @@ export interface CourseWithSyllabus extends Course {
   syllabus_body?: string | null;
   default_view?: string;
 }
+
+// Augment the existing DiscussionTopic
+export interface DiscussionTopicFull extends DiscussionTopic {
+  require_initial_post?: boolean;
+  user_can_see_posts?: boolean;
+  locked?: boolean;
+  locked_for_user?: boolean;
+}
+
+// Augment DiscussionEntry with the fields the /view endpoint returns
+export interface DiscussionEntryFull {
+  id: number;
+  user_id: number;
+  parent_id: number | null;
+  created_at: string;
+  updated_at?: string;
+  message: string; // HTML
+  rating_sum?: number;
+  rating_count?: number;
+  deleted?: boolean;
+  editor_id?: number;
+  replies?: DiscussionEntryFull[];
+}
+
+export interface DiscussionParticipant {
+  id: number;
+  display_name: string;
+  avatar_image_url?: string;
+  html_url?: string;
+}
+
+export interface DiscussionViewFull {
+  unread_entries: number[];
+  forced_entries?: number[];
+  participants: DiscussionParticipant[];
+  view: DiscussionEntryFull[];
+  new_entries?: DiscussionEntryFull[];
+}

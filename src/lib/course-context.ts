@@ -18,3 +18,13 @@ export function isCourseRootPage(url: string): boolean {
   // but not /courses/:id/files, /modules, etc. — those are caught earlier.
   return /\/courses\/\d+\/?(\?|$)/.test(url);
 }
+
+export function parseDiscussionFromUrl(url: string): { courseId: number; topicId: number } | null {
+  const m = url.match(/\/courses\/(\d+)\/discussion_topics\/(\d+)(?:\/|\?|$)/);
+  if (!m) return null;
+  return { courseId: Number(m[1]), topicId: Number(m[2]) };
+}
+
+export function isDiscussionPage(url: string): boolean {
+  return parseDiscussionFromUrl(url) !== null;
+}
