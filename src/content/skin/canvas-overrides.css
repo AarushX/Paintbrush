@@ -661,3 +661,102 @@ body:has(#paintbrush-dashboard-root) .ic-DashboardCard { all: revert; }
   flex: 1 1 100% !important;
   max-width: 100% !important;
 }
+
+/* ------------------------------------------------------
+   Aggressively strip Canvas blue underlines inside trays.
+   Some Canvas builds wrap link text in nested spans that
+   re-introduce the underline. Match liberally.
+   ------------------------------------------------------ */
+
+.navigation-tray-container *,
+.navigation-tray-container a *,
+.navigation-tray-container li a span,
+.navigation-tray-container li a div {
+  text-decoration: none !important;
+  border-bottom: 0 !important;
+}
+
+/* ------------------------------------------------------
+   Breadcrumb (#breadcrumbs / .ic-app-crumbs) — strip the
+   default blue underlined-link look. We already set color
+   above; explicitly disable text-decoration here.
+   ------------------------------------------------------ */
+
+#breadcrumbs ul li a,
+#breadcrumbs ul li a span,
+.ic-app-crumbs li a,
+.ic-app-crumbs__path li a,
+.ic-app-crumbs li a span,
+[id="breadcrumbs"] a,
+[id="breadcrumbs"] a span {
+  text-decoration: none !important;
+  border-bottom: 0 !important;
+}
+
+/* ------------------------------------------------------
+   Hide Immersive Reader — Canvas's read-aloud button that
+   sits in many page headers. Not useful for our flow and
+   crowds the layout.
+   ------------------------------------------------------ */
+
+.immersive_reader_mount_point,
+[data-testid="immersive-reader-button"],
+[data-testid*="ImmersiveReader" i],
+button[aria-label*="Immersive Reader" i],
+a[aria-label*="Immersive Reader" i],
+.immersive-reader-btn,
+.ImmersiveReaderButton {
+  display: none !important;
+}
+
+/* ------------------------------------------------------
+   Reclaim vertical space on viewer pages: when any
+   Paintbrush viewer root is mounted in the document, hide
+   Canvas's page action header + breadcrumb. Our viewer
+   surfaces the course name + section name in its own
+   chip header, so the duplicated bar above is wasted
+   pixels. :has() lets us scope this to only happen when
+   we've replaced the page — never on Canvas-native pages.
+   ------------------------------------------------------ */
+
+body:has(#paintbrush-dashboard-root) .ic-Action-header,
+body:has(#paintbrush-dashboard-root) #breadcrumbs,
+body:has(#paintbrush-dashboard-root) .ic-app-crumbs,
+body:has(#paintbrush-home-root) .ic-Action-header,
+body:has(#paintbrush-home-root) #breadcrumbs,
+body:has(#paintbrush-home-root) .ic-app-crumbs,
+body:has(#paintbrush-assignment-root) .ic-Action-header,
+body:has(#paintbrush-assignment-root) #breadcrumbs,
+body:has(#paintbrush-assignment-root) .ic-app-crumbs,
+body:has(#paintbrush-announcement-root) .ic-Action-header,
+body:has(#paintbrush-announcement-root) #breadcrumbs,
+body:has(#paintbrush-announcement-root) .ic-app-crumbs,
+body:has(#paintbrush-modules-root) .ic-Action-header,
+body:has(#paintbrush-modules-root) #breadcrumbs,
+body:has(#paintbrush-modules-root) .ic-app-crumbs,
+body:has(#paintbrush-grades-root) .ic-Action-header,
+body:has(#paintbrush-grades-root) #breadcrumbs,
+body:has(#paintbrush-grades-root) .ic-app-crumbs,
+body:has(#paintbrush-people-root) .ic-Action-header,
+body:has(#paintbrush-people-root) #breadcrumbs,
+body:has(#paintbrush-people-root) .ic-app-crumbs,
+body:has(#paintbrush-discussion-root) .ic-Action-header,
+body:has(#paintbrush-discussion-root) #breadcrumbs,
+body:has(#paintbrush-discussion-root) .ic-app-crumbs,
+body:has(#paintbrush-discussion-list-root) .ic-Action-header,
+body:has(#paintbrush-discussion-list-root) #breadcrumbs,
+body:has(#paintbrush-discussion-list-root) .ic-app-crumbs,
+body:has(#paintbrush-calendar-root) .ic-Action-header,
+body:has(#paintbrush-calendar-root) #breadcrumbs,
+body:has(#paintbrush-calendar-root) .ic-app-crumbs,
+body:has(#paintbrush-inbox-root) .ic-Action-header,
+body:has(#paintbrush-inbox-root) #breadcrumbs,
+body:has(#paintbrush-inbox-root) .ic-app-crumbs,
+body:has(#paintbrush-files-root) .ic-Action-header,
+body:has(#paintbrush-files-root) #breadcrumbs,
+body:has(#paintbrush-files-root) .ic-app-crumbs,
+body:has(#paintbrush-quizzes-root) .ic-Action-header,
+body:has(#paintbrush-quizzes-root) #breadcrumbs,
+body:has(#paintbrush-quizzes-root) .ic-app-crumbs {
+  display: none !important;
+}

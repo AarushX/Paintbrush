@@ -9,7 +9,6 @@ const HIDE_SELECTORS = [
   '#main',
   '.ic-Action-header',
   '#right-side-wrapper',
-  '#section-tabs ~ *',
   '.header-bar',
   '.module_progression_container',
   '#context_modules_sortable_container',
@@ -52,7 +51,12 @@ function detectBrand() {
 export function mountModulesViewer(courseId: number): () => void {
   if (document.getElementById(MODULES_HOST_ID)) return () => {};
 
-  const anchor = document.querySelector<HTMLElement>('#content') ?? document.querySelector<HTMLElement>('#main') ?? document.body;
+  // Use #main as the anchor (NOT #content) so the host lands as a sibling of
+  // #main rather than a child. We hide #main below; if the host were inside it,
+  // it would be hidden too.
+  const anchor = document.querySelector<HTMLElement>('#main')
+    ?? document.querySelector<HTMLElement>('#content')
+    ?? document.body;
   hideCanvasUI();
 
   const host = document.createElement('div');

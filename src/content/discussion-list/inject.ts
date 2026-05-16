@@ -49,7 +49,7 @@ function detectBrand() {
 export function mountDiscussionList(courseId: number): () => void {
   if (document.getElementById(HOST_ID)) return () => {};
 
-  const anchor = document.querySelector<HTMLElement>('#content') ?? document.querySelector<HTMLElement>('#main') ?? document.body;
+  const anchor = document.querySelector<HTMLElement>('#main') ?? document.querySelector<HTMLElement>('#content') ?? document.body;
   hideCanvasUI();
 
   const host = document.createElement('div');

@@ -222,7 +222,7 @@
         </header>
 
         <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {#each [...detail.messages].reverse() as m (m.id)}
+          {#each [...(detail.messages ?? [])].reverse() as m (m.id)}
             {@const author = authorById(m.author_id)}
             <article class="flex gap-3">
               {#if author.avatar}
