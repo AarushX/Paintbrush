@@ -122,24 +122,51 @@
   margin: 1px 0 !important;
 }
 
+/* Strip Canvas's default blue underlined-link look from tray items and
+   render them as proper list rows. */
+.navigation-tray-container a,
 .navigation-tray-container li > a,
 .navigation-tray-container li > button,
 .navigation-tray-container [class*="ic-NavigationTrayCourse__Link"],
 .navigation-tray-container [class*="ic-NavigationTray"] a {
+  color: rgb(63 63 70) !important; /* zinc-700 */
+  text-decoration: none !important;
   border-radius: var(--pb-radius-sm) !important;
   transition: background-color 140ms ease, color 140ms ease !important;
   border-left: 0 !important;
   padding: 8px 10px !important;
   display: block !important;
   font-weight: 500 !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
 }
 
+.navigation-tray-container a:hover,
 .navigation-tray-container li > a:hover,
 .navigation-tray-container li > button:hover,
 .navigation-tray-container [class*="ic-NavigationTrayCourse__Link"]:hover,
 .navigation-tray-container [class*="ic-NavigationTray"] a:hover {
   background-color: var(--pb-brand-soft) !important;
   color: var(--pb-brand-strong) !important;
+  text-decoration: none !important;
+}
+
+/* Course subtitle / term-name secondary line under each course in the
+   Courses tray should be muted, not the same blue. */
+.navigation-tray-container .ic-NavigationTray__SubInfo,
+.navigation-tray-container [class*="ic-NavigationTray__SubInfo"],
+.navigation-tray-container li > a > div + div,
+.navigation-tray-container li > a > span + span {
+  color: rgb(113 113 122) !important; /* zinc-500 */
+  font-weight: 400 !important;
+  font-size: 12px !important;
+}
+
+/* "All Courses" / footer link at the bottom of the Courses tray */
+.navigation-tray-container .ic-NavigationTrayCourse__Link--all,
+.navigation-tray-container [class*="ic-NavigationTrayCourse__Link--all"] {
+  color: var(--pb-brand-strong) !important;
+  font-weight: 600 !important;
 }
 
 .navigation-tray-container .ic-NavigationTrayFooter,
@@ -236,10 +263,15 @@
 .ic-app-course-menu li a {
   border-radius: var(--pb-radius-md) !important;
   padding: 8px 12px !important;
-  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease !important;
+  transition: background-color 160ms ease, color 160ms ease !important;
   position: relative;
   border-left: 0 !important;
   font-weight: 500 !important;
+  /* Keep items to a single line so the active state doesn't reflow the width
+     when bolder/heavier styling is applied. Hide overflow with ellipsis. */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 #section-tabs li a:hover,
@@ -248,12 +280,15 @@
   color: var(--pb-brand-strong) !important;
 }
 
+/* Active state stays at the SAME font-weight to avoid optical width shift.
+   Brand-soft background + brand-strong text + the left bar accent are
+   plenty of visual distinction. */
 #section-tabs li.section.active a,
 #section-tabs li a.active,
 .ic-app-course-menu li a.active {
   background-color: var(--pb-brand-soft) !important;
   color: var(--pb-brand-strong) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 #section-tabs li.section.active a::before,
