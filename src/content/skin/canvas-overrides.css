@@ -637,3 +637,27 @@ body:has(#paintbrush-dashboard-root) .ic-DashboardCard { all: revert; }
 [aria-label="Syllabus Navigation" i] {
   display: none !important;
 }
+
+/* ------------------------------------------------------
+   Collapse Canvas's #right-side-wrapper. Its children
+   are moved into the Paintbrush sidebar slot in light DOM
+   (see Sidebar.svelte's canvas-slot effect), so the
+   original column should occupy zero width.
+   ------------------------------------------------------ */
+
+#right-side-wrapper,
+.ic-app-main-content__secondary {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+/* The main content area should now flex to fill the gained space */
+#main #not_right_side,
+#main .ic-app-main-content__primary {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+}

@@ -59,6 +59,164 @@
     };
   });
 
+  // ---------------------------------------------------------------------------
+  // Canvas slot: move Canvas's #right-side widgets into a light-DOM slot that
+  // sits flush against the bottom of our sidebar. The slot lives outside the
+  // shadow root so Canvas's own CSS continues to apply to its widgets.
+  // ---------------------------------------------------------------------------
+  const SLOT_ID = 'paintbrush-canvas-slot';
+  const SLOT_MAX_VH = 50;
+
+  function ensureSlot(): HTMLElement {
+    let slot = document.getElementById(SLOT_ID);
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.id = SLOT_ID;
+      document.body.appendChild(slot);
+    }
+    return slot;
+  }
+
+  function applySlotStyle(open: boolean) {
+    const slot = document.getElementById(SLOT_ID);
+    if (!slot) return;
+    if (!open) {
+      slot.style.display = 'none';
+      return;
+    }
+    slot.style.cssText = `
+      position: fixed;
+      bottom: 0;
+      right: var(--pb-scrollbar-w, 0px);
+      width: 340px;
+      max-height: ${SLOT_MAX_VH}vh;
+      overflow-y: auto;
+      z-index: 2147483646;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px) saturate(150%);
+      border-left: 1px solid rgb(228 228 231);
+      border-top: 1px solid rgb(228 228 231);
+      box-shadow: 0 -10px 28px rgba(0,0,0,0.06);
+      padding: 12px 14px;
+      font-family: 'Inter', system-ui, sans-serif;
+      box-sizing: border-box;
+    `;
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      slot.style.background = 'rgba(24, 24, 27, 0.94)';
+      slot.style.borderLeftColor = 'rgb(39 39 42)';
+      slot.style.borderTopColor = 'rgb(39 39 42)';
+      slot.style.color = 'rgb(228 228 231)';
+    }
+  }
+
+  interface MovedRecord {
+    parent: HTMLElement;
+    children: ChildNode[];
+  }
+
+  let movedRecord: MovedRecord | null = null;
+
+  function moveRightSideIntoSlot(): void {
+    const rs = document.querySelector<HTMLElement>('#right-side');
+    const slot = document.getElementById(SLOT_ID);
+    if (!rs || !slot) return;
+    if (movedRecord) return; // already moved
+    if (rs.children.length === 0) return;
+
+    slot.innerHTML = '';
+    const header = document.createElement('div');
+    header.style.cssText =
+      'font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:rgb(113 113 122);font-weight:600;margin-bottom:8px;';
+    header.textContent = 'From Canvas';
+    slot.appendChild(header);
+
+    const moved: ChildNode[] = [];
+    while (rs.firstChild) {
+      moved.push(rs.firstChild);
+      slot.appendChild(rs.firstChild);
+    }
+    movedRecord = { parent: rs, children: moved };
+  }
+
+  function restoreRightSide(): void {
+    if (!movedRecord) return;
+    for (const c of movedRecord.children) {
+      movedRecord.parent.appendChild(c);
+    }
+    movedRecord = null;
+    const slot = document.getElementById(SLOT_ID);
+    if (slot) slot.innerHTML = '';
+  }
+
+  $effect(() => {
+    if (!sidebarState.open) {
+      applySlotStyle(false);
+      return;
+    }
+    ensureSlot();
+    applySlotStyle(true);
+
+    // Initial move
+    moveRightSideIntoSlot();
+
+    // Hide the slot entirely when there's nothing to show
+    const slot = document.getElementById(SLOT_ID)!;
+    if (!movedRecord || movedRecord.children.length === 0) {
+      slot.style.display = 'none';
+    }
+
+    // Keep --pb-canvas-slot-h in sync so the todo scroll area can shrink
+    function syncSidebarHeight() {
+      const s = document.getElementById(SLOT_ID);
+      if (!s || s.style.display === 'none') {
+        document.documentElement.style.setProperty('--pb-canvas-slot-h', '0px');
+        return;
+      }
+      const rect = s.getBoundingClientRect();
+      const h = Math.min(rect.height, window.innerHeight * (SLOT_MAX_VH / 100));
+      document.documentElement.style.setProperty('--pb-canvas-slot-h', `${Math.round(h)}px`);
+    }
+    syncSidebarHeight();
+    const ro = new ResizeObserver(syncSidebarHeight);
+    ro.observe(slot);
+
+    // SPA-navigation watcher: re-attach when Canvas re-renders #right-side
+    let lastSig = '';
+    function getSig(): string {
+      const rs = document.querySelector('#right-side');
+      if (!rs) return 'none';
+      return rs.innerHTML ? rs.innerHTML.length + ':has-content' : 'empty';
+    }
+    const interval = window.setInterval(() => {
+      const sig = getSig();
+      if (sig !== lastSig) {
+        lastSig = sig;
+        // Canvas replaced #right-side with fresh content; re-move it
+        if (!movedRecord) {
+          moveRightSideIntoSlot();
+          const s = document.getElementById(SLOT_ID);
+          if (s) {
+            if (!movedRecord || movedRecord.children.length === 0) {
+              s.style.display = 'none';
+            } else {
+              applySlotStyle(true);
+            }
+          }
+        }
+        syncSidebarHeight();
+      }
+    }, 600);
+
+    return () => {
+      window.clearInterval(interval);
+      ro.disconnect();
+      restoreRightSide();
+      document.documentElement.style.removeProperty('--pb-canvas-slot-h');
+      const s = document.getElementById(SLOT_ID);
+      if (s) s.remove();
+    };
+  });
+
   const groupOrder: Array<[keyof ReturnType<typeof groupedView>, string, string, string]> = [
     ['overdue', 'Overdue', 'text-red-500 dark:text-red-400', 'bg-red-500'],
     ['today', 'Today', 'text-indigo-600 dark:text-indigo-400', 'bg-indigo-500'],
@@ -147,7 +305,7 @@
         <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">No items due in the next 30 days.</p>
       </div>
     {:else}
-      <div class="relative overflow-y-auto" style="height: calc(100vh - 102px);">
+      <div class="relative overflow-y-auto" style="height: calc(100vh - 102px - var(--pb-canvas-slot-h, 0px));">
         {#each groupOrder as [key, label, color, dotColor]}
           {#if groups[key].length > 0}
             <div class={`sticky top-0 z-10 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm px-3 py-1.5 flex items-center gap-1.5 border-b border-zinc-100/50 dark:border-zinc-800/30 ${color}`}>
