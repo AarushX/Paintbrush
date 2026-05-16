@@ -7,7 +7,6 @@
   $effect.pre(() => { sidebarState.open = openProp; });
 
   let groups = $derived(groupedView());
-  let overdueCount = $derived(groups.overdue.length);
 
   onMount(() => {
     loadInitial();
@@ -130,18 +129,16 @@
     {/if}
   </aside>
 {:else}
-  <!-- Slim collapsed bar — themed to match Canvas's left nav -->
+  <!-- Full-height slim rail collapsed state — sibling to Canvas's left nav -->
   <button
     onclick={() => sidebarState.open = true}
-    class="fixed right-0 top-1/2 -translate-y-1/2 z-[2147483647] w-10 flex flex-col items-center justify-center gap-2 py-4 rounded-l-xl shadow-lg transition-all duration-200 group relative"
-    aria-label="Expand sidebar"
-    style="min-height: 100px; background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: -4px 0 14px color-mix(in srgb, var(--pb-brand) 25%, transparent);">
-    <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform duration-200 opacity-80 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+    class="fixed right-0 top-0 h-screen z-[2147483647] flex items-center justify-center transition-[width,box-shadow] duration-200 ease-out group"
+    aria-label="Expand Paintbrush sidebar"
+    style="width: 14px; background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: inset 2px 0 0 color-mix(in srgb, var(--pb-brand-fg) 12%, transparent), -2px 0 18px color-mix(in srgb, var(--pb-brand) 22%, transparent);"
+    onmouseenter={(e) => (e.currentTarget.style.width = '20px')}
+    onmouseleave={(e) => (e.currentTarget.style.width = '14px')}>
+    <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:-translate-x-px transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
     </svg>
-    <span class="text-[10px] font-semibold tracking-[0.15em] uppercase opacity-90" style="writing-mode: vertical-rl; transform: rotate(180deg);">Paintbrush</span>
-    {#if overdueCount > 0}
-      <span class="w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold animate-pulse shadow-sm shadow-red-500/40 ring-2 ring-white/30">{overdueCount > 9 ? '9+' : overdueCount}</span>
-    {/if}
   </button>
 {/if}
