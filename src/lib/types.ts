@@ -388,3 +388,60 @@ export interface CalendarEvent {
     html_url: string;
   };
 }
+
+// === inbox additions ===
+
+export interface ConversationListItem {
+  id: number;
+  subject: string;
+  workflow_state: 'read' | 'unread' | 'archived' | string;
+  last_message?: string;
+  last_message_at?: string;
+  last_authored_message_at?: string;
+  message_count: number;
+  subscribed?: boolean;
+  private?: boolean;
+  starred?: boolean;
+  properties?: string[];
+  participants?: Array<{
+    id: number;
+    name: string;
+    full_name?: string;
+    avatar_url?: string;
+  }>;
+  audience?: number[];
+  audience_contexts?: { courses?: Record<string, string[]>; groups?: Record<string, string[]> };
+  context_code?: string;
+  context_name?: string;
+  avatar_url?: string;
+  visible?: boolean;
+}
+
+export interface ConversationMessage {
+  id: number;
+  author_id: number;
+  created_at: string;
+  body: string;
+  generated?: boolean;
+  attachments?: Array<{ id: number; display_name: string; url: string }>;
+  forwarded_messages?: ConversationMessage[];
+}
+
+export interface ConversationFull extends ConversationListItem {
+  messages: ConversationMessage[];
+  submissions?: unknown[];
+}
+
+export interface CourseLite {
+  id: number;
+  name: string;
+  course_code: string;
+}
+
+export interface RecipientSearchResult {
+  id: string | number;
+  name: string;
+  avatar_url?: string;
+  type?: 'user' | 'context';
+  common_courses?: Record<string, string[]>;
+}

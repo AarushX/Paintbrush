@@ -193,6 +193,7 @@ async function init() {
       syncDiscussionListMount();
       syncDashboardMount();
       syncCalendarMount();
+      syncInboxMount();
     }
   }, 500);
 
@@ -293,3 +294,20 @@ function syncCalendarMount() {
 }
 
 syncCalendarMount();
+
+// === inbox additions ===
+import { isInboxPage } from '../lib/course-context';
+import { mountInboxViewer } from './inbox/inject';
+
+let inboxCleanup: (() => void) | null = null;
+let lastInboxKey: string | null = null;
+function syncInboxMount() {
+  const key = isInboxPage(location.href) ? 'inbox' : null;
+  if (key === lastInboxKey) return;
+  if (inboxCleanup) { inboxCleanup(); inboxCleanup = null; }
+  lastInboxKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => { inboxCleanup = mountInboxViewer(); });
+}
+
+syncInboxMount();

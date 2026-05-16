@@ -96,3 +96,13 @@ export function isCalendarPage(url: string): boolean {
   // /calendar or /calendar2 with optional query
   return /\/calendar2?\/?(\?|$)/.test(new URL(url).pathname);
 }
+
+// === inbox additions ===
+
+export function isInboxPage(url: string): boolean {
+  try {
+    return /\/conversations\/?(\?|$|#)/.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
