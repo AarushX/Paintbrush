@@ -79,3 +79,49 @@ export interface Assignment {
   submission_types: string[];
   html_url: string;
 }
+
+export interface Announcement {
+  id: number;
+  title: string;
+  message: string; // HTML
+  posted_at: string;
+  author?: { display_name?: string };
+  html_url: string;
+}
+
+export interface DiscussionTopic {
+  id: number;
+  title: string;
+  message: string; // HTML
+  posted_at: string;
+  author?: { display_name?: string };
+  discussion_subentry_count?: number;
+  html_url: string;
+}
+
+export interface DiscussionView {
+  view: DiscussionEntry[];
+  participants: Array<{ id: number; display_name: string }>;
+}
+
+export interface DiscussionEntry {
+  id: number;
+  user_id: number;
+  created_at: string;
+  message: string; // HTML
+  replies?: DiscussionEntry[];
+}
+
+export interface Quiz {
+  id: number;
+  title: string;
+  description: string | null; // HTML
+  due_at: string | null;
+  points_possible: number | null;
+  html_url: string;
+}
+
+export interface CourseWithSyllabus extends Course {
+  syllabus_body?: string | null;
+  default_view?: string;
+}

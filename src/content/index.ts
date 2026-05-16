@@ -1,7 +1,8 @@
 import { mountSidebar } from './inject/mount';
-import { watchAndInject, isFilesPage, isModulesPage } from './inject/buttons';
+import { watchAndInject, isFilesPage, isModulesPage, isCourseRootPage } from './inject/buttons';
 import { downloadAllFiles } from './downloader/files';
 import { exportModules } from './downloader/modules';
+import { exportEntireCourse } from './downloader/course';
 
 let unmount: (() => void) | null = null;
 
@@ -26,6 +27,15 @@ async function init() {
       onClick: (courseId) => exportModules(courseId)
     },
     () => isModulesPage(location.href)
+  );
+
+  watchAndInject(
+    {
+      id: 'paintbrush-export-course-btn',
+      label: '⬇ Export entire course (.zip)',
+      onClick: (courseId) => exportEntireCourse(courseId)
+    },
+    () => isCourseRootPage(location.href)
   );
 }
 

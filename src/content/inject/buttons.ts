@@ -1,4 +1,4 @@
-import { parseCourseFromUrl, isFilesPage, isModulesPage } from '../../lib/course-context';
+import { parseCourseFromUrl, isFilesPage, isModulesPage, isCourseRootPage } from '../../lib/course-context';
 
 export interface ButtonConfig {
   id: string;
@@ -82,4 +82,4 @@ export function watchAndInject(button: ButtonConfig, predicate: () => boolean): 
   };
 }
 
-export { isFilesPage, isModulesPage };
+export { isFilesPage, isModulesPage, isCourseRootPage };
