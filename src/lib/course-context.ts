@@ -69,3 +69,11 @@ export function isCourseHomePage(url: string): boolean {
   // Strictly the root /courses/:id (or /courses/:id/) — no further path segment
   return /\/courses\/\d+\/?(\?|$)/.test(url) && !/\/courses\/\d+\/[a-z]/.test(url);
 }
+
+// === discussions-list/modules-fix additions ===
+
+export function isDiscussionsListPage(url: string): boolean {
+  // Matches /courses/:id/discussion_topics or /courses/:id/discussion_topics/
+  // but NOT /courses/:id/discussion_topics/123 (that's the detail page).
+  return /\/courses\/\d+\/discussion_topics\/?(\?|$)/.test(url);
+}

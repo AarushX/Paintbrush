@@ -1,19 +1,16 @@
 import { mount, unmount } from 'svelte';
-import ModulesViewer from './ModulesViewer.svelte';
+import DiscussionListViewer from './DiscussionListViewer.svelte';
 import tailwindCss from '../../styles/tailwind.css?inline';
 
-const MODULES_HOST_ID = 'paintbrush-modules-root';
+const HOST_ID = 'paintbrush-discussion-list-root';
 
 const HIDE_SELECTORS = [
   '#content',
   '#main',
   '.ic-Action-header',
   '#right-side-wrapper',
-  '#section-tabs ~ *',
   '.header-bar',
   '.module_progression_container',
-  '#context_modules_sortable_container',
-  '#context_modules'
 ];
 
 interface Hidden { el: HTMLElement; prev: string }
@@ -49,14 +46,14 @@ function detectBrand() {
   return null;
 }
 
-export function mountModulesViewer(courseId: number): () => void {
-  if (document.getElementById(MODULES_HOST_ID)) return () => {};
+export function mountDiscussionList(courseId: number): () => void {
+  if (document.getElementById(HOST_ID)) return () => {};
 
   const anchor = document.querySelector<HTMLElement>('#content') ?? document.querySelector<HTMLElement>('#main') ?? document.body;
   hideCanvasUI();
 
   const host = document.createElement('div');
-  host.id = MODULES_HOST_ID;
+  host.id = HOST_ID;
   host.style.cssText = 'all: initial; position: relative; width: 100%; pointer-events: auto;';
   anchor.parentNode?.insertBefore(host, anchor);
 
@@ -89,7 +86,7 @@ export function mountModulesViewer(courseId: number): () => void {
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   mq.addEventListener('change', applyDarkMode);
 
-  const app = mount(ModulesViewer, { target: appRoot, props: { courseId } });
+  const app = mount(DiscussionListViewer, { target: appRoot, props: { courseId } });
 
   return () => {
     unmount(app);

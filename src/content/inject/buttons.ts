@@ -87,3 +87,6 @@ export { isFilesPage, isModulesPage, isCourseRootPage, isDiscussionPage, parseAs
 
 // === grades/home additions ===
 export { isGradesPage, isCourseHomePage } from '../../lib/course-context';
+
+// === discussions-list/modules-fix additions ===
+export { isDiscussionsListPage } from '../../lib/course-context';

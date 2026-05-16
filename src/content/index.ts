@@ -15,6 +15,9 @@ import { mountPeopleViewer } from './people/inject';
 import { isGradesPage, isCourseHomePage } from '../lib/course-context';
 import { mountGradesViewer } from './grades/inject';
 import { mountHomeViewer } from './home/inject';
+// === discussions-list/modules-fix additions ===
+import { isDiscussionsListPage } from '../lib/course-context';
+import { mountDiscussionList } from './discussion-list/inject';
 
 let unmount: (() => void) | null = null;
 
@@ -187,6 +190,7 @@ async function init() {
       syncPeopleMount();
       syncGradesMount();
       syncHomeMount();
+      syncDiscussionListMount();
     }
   }, 500);
 
@@ -225,3 +229,24 @@ chrome.runtime.onMessage.addListener((msg) => {
     document.dispatchEvent(new CustomEvent('paintbrush:toggle'));
   }
 });
+
+// === discussions-list/modules-fix additions ===
+let discussionListCleanup: (() => void) | null = null;
+let lastDiscussionListKey: string | null = null;
+function syncDiscussionListMount() {
+  let key: string | null = null;
+  if (isDiscussionsListPage(location.href)) {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) key = String(cid);
+  }
+  if (key === lastDiscussionListKey) return;
+  if (discussionListCleanup) { discussionListCleanup(); discussionListCleanup = null; }
+  lastDiscussionListKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) discussionListCleanup = mountDiscussionList(cid);
+  });
+}
+
+syncDiscussionListMount();
