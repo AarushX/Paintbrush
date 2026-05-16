@@ -6,3 +6,23 @@ chrome.action.onClicked.addListener(async (tab) => {
     // Content script not loaded on this tab (e.g. chrome:// page) — ignore.
   }
 });
+
+chrome.runtime.onStartup.addListener(restoreCustomScripts);
+chrome.runtime.onInstalled.addListener(restoreCustomScripts);
+
+async function restoreCustomScripts() {
+  const { customDomains = [] } = await chrome.storage.local.get('customDomains');
+  for (const d of customDomains as string[]) {
+    const origin = `*://${d}/*`;
+    try {
+      await chrome.scripting.registerContentScripts([{
+        id: `paintbrush-${d}`,
+        matches: [origin],
+        js: ['src/content/index.ts'],
+        runAt: 'document_idle'
+      }]);
+    } catch {
+      // already registered
+    }
+  }
+}
