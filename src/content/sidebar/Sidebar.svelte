@@ -8,6 +8,21 @@
 
   let groups = $derived(groupedView());
 
+  // Push Canvas's content inward to make room for the sidebar instead of
+  // floating over it. Width changes are animated via the same easing the
+  // sidebar uses, so the page reflow stays in lockstep with the panel.
+  const EXPANDED_W = 340;
+  const RAIL_W = 14;
+  $effect(() => {
+    const w = sidebarState.open ? EXPANDED_W : RAIL_W;
+    document.body.style.transition = 'padding-right 300ms cubic-bezier(0.22,0.61,0.36,1)';
+    document.body.style.paddingRight = `${w}px`;
+    return () => {
+      document.body.style.paddingRight = '';
+      document.body.style.transition = '';
+    };
+  });
+
   onMount(() => {
     loadInitial();
     const onFocus = () => {
