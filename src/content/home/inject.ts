@@ -55,11 +55,11 @@ export function mountHomeViewer(courseId: number): () => void {
     'display: block',
     'position: fixed',
     'top: 0',
-    'left: 84px',
+    'left: 0',
     'right: var(--pb-sidebar-w, 340px)',
     'bottom: 0',
     'overflow-y: auto',
-    'background: #fafafa',
+    'background: transparent',
     'z-index: 1',
     'pointer-events: auto',
     'transition: right 300ms cubic-bezier(0.22,0.61,0.36,1)'

@@ -101,7 +101,44 @@ style.textContent = `
   html[data-pb-page]:not([data-pb-page=""]) body {
     background: #fafafa !important;
   }
+  @media (prefers-color-scheme: dark) {
+    html[data-pb-page]:not([data-pb-page=""]) body {
+      background: #0a0a0b !important;
+    }
+  }
 `;
 (document.head || document.documentElement).appendChild(style);
+
+// JS-side fallback hides for elements we can't reliably target via CSS
+// (text content matches, dynamically-class-named widgets, etc.)
+function killSyllabusNav() {
+  // Match any element whose visible text is exactly the "Syllabus Navigation"
+  // label, plus its expander parent.
+  const candidates = document.querySelectorAll<HTMLElement>(
+    'summary, button, a, div, span, [role="button"], details'
+  );
+  for (const el of candidates) {
+    const txt = el.textContent?.trim();
+    if (txt === 'Syllabus Navigation' || txt === '▶ Syllabus Navigation' || txt === 'Syllabus Navigation ▼') {
+      // Hide the widget itself + its expanded list (next sibling typically)
+      let target: HTMLElement | null = el;
+      // If we matched the inner summary/button, walk up to the wrapper.
+      while (target && target.parentElement && target.parentElement.children.length === 1) {
+        target = target.parentElement;
+      }
+      if (target) target.style.display = 'none';
+    }
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', killSyllabusNav, { once: true });
+} else {
+  killSyllabusNav();
+}
+// Re-run after Canvas's React renders
+setTimeout(killSyllabusNav, 500);
+setTimeout(killSyllabusNav, 1500);
+new MutationObserver(killSyllabusNav).observe(document.documentElement, { childList: true, subtree: true });
 
 console.log('[Paintbrush:eager]', 'data-pb-page =', t ?? '(none)');
