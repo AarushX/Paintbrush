@@ -217,15 +217,20 @@ async function init() {
     const ids = parseDiscussionFromUrl(location.href);
     const key = ids ? `${ids.courseId}:${ids.topicId}` : null;
     if (key === lastDiscussionKey) return;
+    console.log('[Paintbrush] syncDiscussionMount: key=', key, 'url=', location.href);
     if (discussionCleanup) {
       discussionCleanup();
       discussionCleanup = null;
     }
     lastDiscussionKey = key;
     if (ids) {
-      // Wait one frame for Canvas's DOM to render its container, then take over.
       requestAnimationFrame(() => {
-        discussionCleanup = mountDiscussionViewer(ids.courseId, ids.topicId);
+        try {
+          discussionCleanup = mountDiscussionViewer(ids.courseId, ids.topicId);
+          console.log('[Paintbrush] mountDiscussionViewer ✓');
+        } catch (err) {
+          console.error('[Paintbrush] mountDiscussionViewer failed', err);
+        }
       });
     }
   }

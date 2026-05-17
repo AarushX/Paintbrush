@@ -107,8 +107,12 @@
   border-left: 0 !important;
 }
 
-/* Each course / item rendered as a card. */
-[data-cid="Tray"] [role="dialog"] li {
+/* Each course / item rendered as a card — ONLY when the li actually
+   contains a link (real course item). Decorative <li><hr></li>
+   separators that Canvas occasionally inserts get a transparent
+   passthrough so they don't render as empty cards. */
+[data-cid="Tray"] [role="dialog"] li:has(> a),
+[data-cid="Tray"] [role="dialog"] li:has(a) {
   background: rgba(255, 255, 255, 0.85) !important;
   border: 1px solid rgba(0, 0, 0, 0.04) !important;
   border-radius: 10px !important;
@@ -119,10 +123,39 @@
   overflow: hidden;
 }
 
-[data-cid="Tray"] [role="dialog"] li:hover {
+[data-cid="Tray"] [role="dialog"] li:has(> a):hover,
+[data-cid="Tray"] [role="dialog"] li:has(a):hover {
   border-color: color-mix(in srgb, var(--pb-brand) 50%, transparent) !important;
   box-shadow: 0 4px 14px color-mix(in srgb, var(--pb-brand) 18%, transparent) !important;
   transform: translateY(-1px) !important;
+}
+
+/* Decorative separator <li>s (Canvas wraps <hr> in an <li data-cid="ListItem">).
+   Strip all card styling — they should look like an <hr>. */
+[data-cid="Tray"] [role="dialog"] li[data-cid="ListItem"]:not(:has(a)),
+[data-cid="Tray"] [role="dialog"] li:has(> hr) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  margin: 8px 14px !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+[data-cid="Tray"] [role="dialog"] li[data-cid="ListItem"]:not(:has(a)):hover,
+[data-cid="Tray"] [role="dialog"] li:has(> hr):hover {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+[data-cid="Tray"] [role="dialog"] hr {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  margin: 0 !important;
+}
+@media (prefers-color-scheme: dark) {
+  [data-cid="Tray"] [role="dialog"] hr {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
 }
 
 /* Inside each card: hide the course-code subtitle and term line via
@@ -171,13 +204,27 @@
   color: var(--pb-brand-strong) !important;
 }
 
-/* "All Courses" / footer-style links — keep them recognizable but
-   styled. They typically render as bare anchors not wrapped in li. */
+/* "All Courses" / "All Groups" / footer-style links — Canvas's gold
+   brand at 80% is too washed out to be readable on white. Mix HEAVIER
+   with black/white depending on light vs dark mode. */
 [data-cid="Tray"] [role="dialog"] > a,
 [data-cid="Tray"] [role="dialog"] [class*="TrayFooter"] a,
-[data-cid="Tray"] [role="dialog"] [class*="ic-NavigationTrayCourse__Link--all"] {
-  color: var(--pb-brand-strong) !important;
+[data-cid="Tray"] [role="dialog"] [class*="ic-NavigationTrayCourse__Link--all"],
+[data-cid="Tray"] [role="dialog"] [class*="-view-link"][href$="/groups"],
+[data-cid="Tray"] [role="dialog"] [class*="-view-link"][href$="/courses"],
+[data-cid="Tray"] [role="dialog"] [class*="-view-link"][href="/all_courses"] {
+  color: color-mix(in srgb, var(--pb-brand) 30%, #18181b) !important;
   font-weight: 600 !important;
+}
+@media (prefers-color-scheme: dark) {
+  [data-cid="Tray"] [role="dialog"] > a,
+  [data-cid="Tray"] [role="dialog"] [class*="TrayFooter"] a,
+  [data-cid="Tray"] [role="dialog"] [class*="ic-NavigationTrayCourse__Link--all"],
+  [data-cid="Tray"] [role="dialog"] [class*="-view-link"][href$="/groups"],
+  [data-cid="Tray"] [role="dialog"] [class*="-view-link"][href$="/courses"],
+  [data-cid="Tray"] [role="dialog"] [class*="-view-link"][href="/all_courses"] {
+    color: color-mix(in srgb, var(--pb-brand) 70%, #ffffff) !important;
+  }
 }
 
 /* Tray dark-mode (matches our viewer when OS prefers dark).
