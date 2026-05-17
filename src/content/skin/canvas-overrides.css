@@ -98,10 +98,21 @@
 
 .navigation-tray-container,
 [data-cid="Tray Position"],
-[data-cid="Tray"] {
-  /* Our viewer hosts sit at z-index: 100 with their own stacking context
-     (position: fixed). Trays must sit ABOVE them — bump to just under our
-     sidebar's max-int z-index. */
+[data-cid="Tray"],
+[data-cid="Tray"] > span,
+[data-cid="Tray"] > span > span,
+[data-cid="Tray"] [class*="-tray"],
+[data-cid="Tray"] [class*="transition--slide"],
+[class*="-tray"][class*="transition--slide-left-entered"],
+[class*="-tray"][class*="transition--slide-left-entering"],
+[class*="-tray"][class*="transition--slide-right-entered"],
+[class*="-tray"][class*="transition--slide-right-entering"],
+[role="dialog"][aria-label*="tray" i],
+[role="dialog"][aria-label*="ray" i] {
+  /* The outer [data-cid="Tray"] is a <span> (display: inline), which
+     CANNOT carry z-index. The actual positioned element is the inner
+     [class*="-tray"] span. Match every nesting level so whichever
+     one has position: fixed gets our z-index. */
   z-index: 2147483646 !important;
 }
 
