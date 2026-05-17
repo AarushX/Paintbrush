@@ -96,6 +96,15 @@
    inner content only.
    ------------------------------------------------------ */
 
+.navigation-tray-container,
+[data-cid="Tray Position"],
+[data-cid="Tray"] {
+  /* Our viewer hosts sit at z-index: 100 with their own stacking context
+     (position: fixed). Trays must sit ABOVE them — bump to just under our
+     sidebar's max-int z-index. */
+  z-index: 2147483646 !important;
+}
+
 .navigation-tray-container {
   background: rgba(255, 255, 255, 0.97) !important;
   border-right: 1px solid rgb(228 228 231) !important;
