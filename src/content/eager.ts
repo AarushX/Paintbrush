@@ -32,14 +32,16 @@ if (t) document.documentElement.setAttribute('data-pb-page', t);
 const style = document.createElement('style');
 style.id = 'paintbrush-eager-style';
 style.textContent = `
+  /* Hide Canvas's main content on viewer pages. #left-side / #section-tabs
+     are NOT hidden — Canvas's native course-secondary-nav and its "Courses"
+     popout still work. Our fixed-position viewer host covers them visually,
+     but expanding them via Canvas's UI still functions. */
   html[data-pb-page]:not([data-pb-page=""]) #main,
   html[data-pb-page]:not([data-pb-page=""]) #content,
   html[data-pb-page]:not([data-pb-page=""]) .ic-Action-header,
   html[data-pb-page]:not([data-pb-page=""]) #breadcrumbs,
   html[data-pb-page]:not([data-pb-page=""]) .ic-app-crumbs,
   html[data-pb-page]:not([data-pb-page=""]) #wrapper > header,
-  html[data-pb-page]:not([data-pb-page=""]) #left-side,
-  html[data-pb-page]:not([data-pb-page=""]) #section-tabs,
   html[data-pb-page]:not([data-pb-page=""]) .immersive_reader_mount_point,
   html[data-pb-page]:not([data-pb-page=""]) [data-testid="immersive-reader-button"],
   html[data-pb-page]:not([data-pb-page=""]) [data-testid*="ImmersiveReader" i],
@@ -56,29 +58,43 @@ style.textContent = `
   html[data-pb-page]:not([data-pb-page=""]) #right-side {
     display: none !important;
   }
+
+  /* Always hide Canvas's footer + cookies/AUP banner. With our overlay
+     covering the page, these slide up to the top and look broken. */
+  .ic-app-footer,
+  #footer,
+  .osano-cm-window,
+  .osano-cm-dialog,
+  .osano-cm-widget,
+  #cookie-banner,
+  .cookie-banner,
+  .cnvs-cookie-banner,
+  .ic-cookie-banner,
+  [id^="cnvs-cookie"],
+  [id^="osano"],
+  [class*="CookieBanner"],
+  .AcceptableUsePolicy,
+  .acceptable-use-policy {
+    display: none !important;
+  }
+
+  /* Strip Canvas's default link underline from the global left nav.
+     Match the link, its inner text spans, and the wrapping anchor in
+     case Canvas changes which element carries the underline. */
+  .ic-app-header__menu-list-link,
+  .ic-app-header__menu-list-link:hover,
+  .ic-app-header__menu-list-link *,
+  .ic-app-header__menu-list-link .menu-item__text,
+  .ic-app-header a,
+  .ic-app-header a:hover,
+  .ic-app-header__logomark-container a,
+  .ic-app-header__logomark-container {
+    text-decoration: none !important;
+    border-bottom: 0 !important;
+  }
+
   html[data-pb-page]:not([data-pb-page=""]) body {
     background: #fafafa !important;
-  }
-  /* Expanded nav drawer — show #left-side as a floating overlay */
-  html[data-pb-nav-expanded="true"] #left-side {
-    display: block !important;
-    position: fixed !important;
-    top: 52px !important;
-    left: 80px !important;
-    width: 240px !important;
-    max-height: calc(100vh - 64px) !important;
-    overflow-y: auto !important;
-    z-index: 2147483645 !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    border: 1px solid rgb(228 228 231) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 12px 36px rgba(0,0,0,0.12) !important;
-    padding: 8px !important;
-    backdrop-filter: blur(12px) saturate(150%) !important;
-  }
-  html[data-pb-nav-expanded="true"] #left-side #section-tabs,
-  html[data-pb-nav-expanded="true"] #left-side .ic-app-course-menu {
-    display: block !important;
   }
 `;
 (document.head || document.documentElement).appendChild(style);
