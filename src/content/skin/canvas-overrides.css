@@ -116,11 +116,22 @@
   z-index: 2147483646 !important;
 }
 
-.navigation-tray-container {
-  background: rgba(255, 255, 255, 0.97) !important;
+.navigation-tray-container,
+[data-cid="Tray"] [class*="-tray"][class*="transition--slide"],
+[data-cid="Tray"] > span > span {
+  background: #ffffff !important;
   border-right: 1px solid rgb(228 228 231) !important;
-  box-shadow: 8px 0 28px rgba(0,0,0,0.08) !important;
-  backdrop-filter: blur(10px) saturate(150%) !important;
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12), 1px 0 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Tray inner content panel — make sure it's not collapsed */
+[data-cid="Tray"] [class*="tray__content"],
+[data-cid="Tray"] [class*="Tray__Content"],
+[data-cid="Tray"] [role="dialog"] {
+  display: block !important;
+  visibility: visible !important;
+  background: transparent !important;
+  height: 100% !important;
 }
 
 .navigation-tray-container h2,
