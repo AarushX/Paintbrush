@@ -141,4 +141,36 @@ setTimeout(killSyllabusNav, 500);
 setTimeout(killSyllabusNav, 1500);
 new MutationObserver(killSyllabusNav).observe(document.documentElement, { childList: true, subtree: true });
 
+// Measure Canvas's left global nav width and publish as a CSS variable so
+// viewer hosts can use `left: var(--pb-left-inset, 84px)` and stay flush
+// against the nav whether it's expanded or collapsed.
+function measureNavWidth() {
+  const nav = document.querySelector<HTMLElement>('.ic-app-header') ?? document.querySelector<HTMLElement>('#header');
+  const w = nav ? nav.getBoundingClientRect().width : 84;
+  document.documentElement.style.setProperty('--pb-left-inset', `${Math.max(0, Math.round(w))}px`);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', measureNavWidth, { once: true });
+} else {
+  measureNavWidth();
+}
+window.addEventListener('resize', measureNavWidth);
+// Re-measure when Canvas toggles the nav collapsed/expanded
+new MutationObserver(measureNavWidth).observe(document.documentElement, {
+  attributes: true, subtree: true, attributeFilter: ['class', 'style', 'data-collapsed', 'aria-expanded']
+});
+
+// Safety net: if data-pb-page was set but no Paintbrush viewer root mounted
+// within 5 seconds, undo the eager hide so Canvas's native content shows.
+// Prevents any page from being permanently blanked when a viewer fails.
+function ensureNotBlank() {
+  const pageType = document.documentElement.getAttribute('data-pb-page');
+  if (!pageType) return;
+  const anyRoot = document.querySelector('[id^="paintbrush-"][id$="-root"]:not(#paintbrush-root)');
+  if (anyRoot) return; // viewer mounted; we're fine
+  console.warn('[Paintbrush] viewer failed to mount within 5s; restoring Canvas content');
+  document.documentElement.removeAttribute('data-pb-page');
+}
+setTimeout(ensureNotBlank, 5000);
+
 console.log('[Paintbrush:eager]', 'data-pb-page =', t ?? '(none)');

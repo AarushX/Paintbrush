@@ -47,7 +47,7 @@ export function mountAssignmentViewer(args: AssignmentArgs): () => void {
 
   const host = document.createElement('div');
   host.id = HOST_ID;
-  host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: 0; right: var(--pb-sidebar-w, 340px); bottom: 0; overflow-y: auto; background: transparent; z-index: 1; transition: right 300ms cubic-bezier(0.22,0.61,0.36,1); pointer-events: auto;';
+  host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: var(--pb-left-inset, 84px); right: var(--pb-sidebar-w, 340px); bottom: 0; overflow-y: auto; background: transparent; z-index: 1; transition: right 300ms cubic-bezier(0.22,0.61,0.36,1); pointer-events: auto;';
   if (container && container.parentNode) {
     container.parentNode.insertBefore(host, container);
   } else {

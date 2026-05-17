@@ -428,17 +428,26 @@ let discussionListCleanup: (() => void) | null = null;
 let lastDiscussionListKey: string | null = null;
 function syncDiscussionListMount() {
   let key: string | null = null;
-  if (isDiscussionsListPage(location.href)) {
+  const isList = isDiscussionsListPage(location.href);
+  if (isList) {
     const cid = parseCourseFromUrl(location.href);
     if (cid != null) key = String(cid);
   }
   if (key === lastDiscussionListKey) return;
+  console.log('[Paintbrush] syncDiscussionListMount: isList=', isList, 'key=', key, 'url=', location.href);
   if (discussionListCleanup) { discussionListCleanup(); discussionListCleanup = null; }
   lastDiscussionListKey = key;
   if (!key) return;
   requestAnimationFrame(() => {
     const cid = parseCourseFromUrl(location.href);
-    if (cid != null) discussionListCleanup = mountDiscussionList(cid);
+    if (cid != null) {
+      try {
+        discussionListCleanup = mountDiscussionList(cid);
+        console.log('[Paintbrush] mountDiscussionList ✓');
+      } catch (err) {
+        console.error('[Paintbrush] mountDiscussionList failed', err);
+      }
+    }
   });
 }
 

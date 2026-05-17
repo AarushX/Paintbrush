@@ -55,7 +55,7 @@ export function mountHomeViewer(courseId: number): () => void {
     'display: block',
     'position: fixed',
     'top: 0',
-    'left: 0',
+    'left: var(--pb-left-inset, 84px)',
     'right: var(--pb-sidebar-w, 340px)',
     'bottom: 0',
     'overflow-y: auto',
