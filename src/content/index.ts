@@ -52,53 +52,139 @@ function applyEagerHide() {
 }
 applyEagerHide();
 
-// Floating nav-drawer toggle button. Visible only on viewer pages.
-// Clicking it expands/retracts the (otherwise hidden) Canvas section-tabs
-// as a floating overlay so the user can still jump between course sections
-// without Canvas's slow native sidebar reflowing the page.
+// Floating nav-drawer toggle button + our OWN drawer (don't depend on
+// Canvas's #left-side existing or being style-able). Drawer is a
+// light-DOM panel pinned at left, with the standard set of course
+// sections as links. Visible only on viewer pages.
+const COURSE_SECTIONS: Array<[string, string]> = [
+  ['Home', ''],
+  ['Modules', '/modules'],
+  ['Assignments', '/assignments'],
+  ['Grades', '/grades'],
+  ['Discussions', '/discussion_topics'],
+  ['Announcements', '/announcements'],
+  ['People', '/users'],
+  ['Files', '/files'],
+  ['Pages', '/pages'],
+  ['Quizzes', '/quizzes'],
+  ['Syllabus', '/assignments/syllabus']
+];
+
+function currentCourseId(): number | null {
+  const m = location.pathname.match(/\/courses\/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+
+function rebuildDrawerLinks() {
+  const drawer = document.getElementById('paintbrush-nav-drawer');
+  if (!drawer) return;
+  const cid = currentCourseId();
+  const here = location.pathname;
+  if (cid == null) {
+    drawer.innerHTML = '<div style="padding:14px;font:13px/1.4 system-ui;color:#71717a;">Course sections appear here when you\'re inside a course.</div>';
+    return;
+  }
+  drawer.innerHTML = '';
+  const header = document.createElement('div');
+  header.style.cssText = 'padding: 10px 14px 6px; font: 600 10px/1 system-ui; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a;';
+  header.textContent = 'Course';
+  drawer.appendChild(header);
+  for (const [label, suffix] of COURSE_SECTIONS) {
+    const href = `/courses/${cid}${suffix}`;
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = label;
+    const active = (suffix === '' && here === `/courses/${cid}`) ||
+                   (suffix !== '' && here.startsWith(href));
+    a.style.cssText = [
+      'display: block',
+      'padding: 8px 14px',
+      'font: 500 13px/1.4 system-ui',
+      'color: ' + (active ? '#3730a3' : '#3f3f46'),
+      'background: ' + (active ? 'rgba(79, 70, 229, 0.12)' : 'transparent'),
+      'border-radius: 6px',
+      'margin: 1px 6px',
+      'text-decoration: none',
+      'transition: background-color 140ms ease, color 140ms ease'
+    ].join(';');
+    a.addEventListener('mouseenter', () => {
+      if (!active) { a.style.background = 'rgba(0,0,0,0.04)'; a.style.color = '#18181b'; }
+    });
+    a.addEventListener('mouseleave', () => {
+      if (!active) { a.style.background = 'transparent'; a.style.color = '#3f3f46'; }
+    });
+    drawer.appendChild(a);
+  }
+}
+
 function ensureNavToggle() {
   if (document.getElementById('paintbrush-nav-toggle')) return;
   if (!document.body) return;
+
+  // Toggle button
   const btn = document.createElement('button');
   btn.id = 'paintbrush-nav-toggle';
   btn.type = 'button';
   btn.setAttribute('aria-label', 'Toggle course navigation');
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>';
   btn.style.cssText = [
-    'position: fixed', 'top: 12px', 'left: 80px',
+    'all: initial', 'box-sizing: border-box',
+    'position: fixed', 'top: 12px', 'left: 92px',
     'z-index: 2147483646',
     'width: 32px', 'height: 32px',
-    'display: none', // shown via CSS only on viewer pages
+    'display: none',
     'align-items: center', 'justify-content: center',
     'border-radius: 8px',
     'background: rgba(255, 255, 255, 0.94)',
     'border: 1px solid rgb(228 228 231)',
     'box-shadow: 0 2px 6px rgba(0,0,0,0.06)',
     'color: rgb(63 63 70)',
-    'cursor: pointer',
-    'transition: background-color 140ms ease, transform 100ms ease',
-    'backdrop-filter: blur(6px)'
+    'cursor: pointer'
   ].join(';');
-  btn.addEventListener('mouseenter', () => { btn.style.background = 'rgba(255, 255, 255, 1)'; });
-  btn.addEventListener('mouseleave', () => { btn.style.background = 'rgba(255, 255, 255, 0.94)'; });
   btn.addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-pb-nav-expanded') === 'true';
     if (cur) document.documentElement.removeAttribute('data-pb-nav-expanded');
-    else document.documentElement.setAttribute('data-pb-nav-expanded', 'true');
+    else { document.documentElement.setAttribute('data-pb-nav-expanded', 'true'); rebuildDrawerLinks(); }
   });
   document.body.appendChild(btn);
 
-  // Show/hide via CSS based on whether we're on a viewer page
+  // Drawer (our own, not Canvas's)
+  const drawer = document.createElement('nav');
+  drawer.id = 'paintbrush-nav-drawer';
+  drawer.style.cssText = [
+    'all: initial', 'box-sizing: border-box',
+    'position: fixed', 'top: 52px', 'left: 92px',
+    'width: 240px', 'max-height: calc(100vh - 64px)',
+    'overflow-y: auto',
+    'z-index: 2147483645',
+    'background: rgba(255, 255, 255, 0.98)',
+    'border: 1px solid rgb(228 228 231)',
+    'border-radius: 12px',
+    'box-shadow: 0 16px 48px rgba(0,0,0,0.15)',
+    'display: none',
+    'font-family: system-ui, sans-serif'
+  ].join(';');
+  document.body.appendChild(drawer);
+
+  // Click outside drawer to close
+  document.addEventListener('click', (e) => {
+    if (document.documentElement.getAttribute('data-pb-nav-expanded') !== 'true') return;
+    const t = e.target as Node;
+    if (drawer.contains(t) || btn.contains(t)) return;
+    document.documentElement.removeAttribute('data-pb-nav-expanded');
+  });
+
+  // Show/hide rules
   const toggleStyle = document.createElement('style');
   toggleStyle.textContent = `
     html[data-pb-page]:not([data-pb-page=""]) #paintbrush-nav-toggle { display: inline-flex !important; }
     html:not([data-pb-page]) #paintbrush-nav-toggle,
     html[data-pb-page=""] #paintbrush-nav-toggle { display: none !important; }
-    /* Close the drawer when clicking elsewhere */
     html[data-pb-nav-expanded="true"] #paintbrush-nav-toggle {
       background: rgb(63 63 70) !important;
       color: white !important;
     }
+    html[data-pb-nav-expanded="true"] #paintbrush-nav-drawer { display: block !important; }
   `;
   (document.head || document.documentElement).appendChild(toggleStyle);
 }

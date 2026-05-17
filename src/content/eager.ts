@@ -50,7 +50,10 @@ style.textContent = `
   html[data-pb-page]:not([data-pb-page=""]) #syllabus_nav,
   html[data-pb-page]:not([data-pb-page=""]) .syllabus-navigation,
   html[data-pb-page]:not([data-pb-page=""]) #wrapper > #header,
-  html[data-pb-page]:not([data-pb-page=""]) #ic-mobile-toolbar {
+  html[data-pb-page]:not([data-pb-page=""]) #ic-mobile-toolbar,
+  html[data-pb-page]:not([data-pb-page=""]) #paintbrush-canvas-slot,
+  html[data-pb-page]:not([data-pb-page=""]) #right-side-wrapper,
+  html[data-pb-page]:not([data-pb-page=""]) #right-side {
     display: none !important;
   }
   html[data-pb-page]:not([data-pb-page=""]) body {
