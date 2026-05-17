@@ -15,15 +15,21 @@
   const RAIL_W = 14;
   $effect(() => {
     const w = sidebarState.open ? EXPANDED_W : RAIL_W;
+
+    // Tell our fixed-position viewer hosts how much room to leave on the
+    // right via a CSS variable on <html>. The viewer-host inject.ts files
+    // read `var(--pb-sidebar-w, 340px)` so they're never covered by the
+    // sidebar. Updates animate via the host's own transition.
+    document.documentElement.style.setProperty('--pb-sidebar-w', `${w}px`);
+
+    // Canvas-native pages (no viewer) get their content pushed via body
+    // padding-right so the sidebar isn't floating over them.
     document.body.style.transition = 'padding-right 300ms cubic-bezier(0.22,0.61,0.36,1)';
     document.body.style.paddingRight = `${w}px`;
-    // Suppress horizontal overflow so fixed-width Canvas widgets don't poke past
-    // the shrunk body boundary (e.g. full-bleed banners, gradebook toolbar).
+
     const prevOverflowX = document.documentElement.style.overflowX;
     document.documentElement.style.overflowX = 'hidden';
 
-    // Push any Canvas right-anchored fixed/absolute elements inward so they
-    // don't collide with our sidebar (e.g. #right-side-wrapper on dashboard).
     const canvasRightFixed = document.querySelectorAll<HTMLElement>(
       '#right-side-wrapper, #right-side, .fixed-right'
     );
@@ -35,6 +41,7 @@
     }
 
     return () => {
+      document.documentElement.style.removeProperty('--pb-sidebar-w');
       document.body.style.paddingRight = '';
       document.body.style.transition = '';
       document.documentElement.style.overflowX = prevOverflowX;

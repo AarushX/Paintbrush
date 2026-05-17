@@ -56,12 +56,13 @@ export function mountHomeViewer(courseId: number): () => void {
     'position: fixed',
     'top: 0',
     'left: 84px',
-    'right: 0',
+    'right: var(--pb-sidebar-w, 340px)',
     'bottom: 0',
     'overflow-y: auto',
     'background: #fafafa',
     'z-index: 100',
-    'pointer-events: auto'
+    'pointer-events: auto',
+    'transition: right 300ms cubic-bezier(0.22,0.61,0.36,1)'
   ].join(';');
   document.body.appendChild(host);
   console.log('[Paintbrush] home host appended to body');

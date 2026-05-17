@@ -50,7 +50,7 @@ export function mountDiscussionViewer(courseId: number, topicId: number): () => 
 
   const host = document.createElement('div');
   host.id = HOST_ID;
-  host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: 84px; right: 0; bottom: 0; overflow-y: auto; background: #fafafa; z-index: 100; pointer-events: auto;';
+  host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: 84px; right: var(--pb-sidebar-w, 340px); bottom: 0; overflow-y: auto; background: #fafafa; z-index: 100; transition: right 300ms cubic-bezier(0.22,0.61,0.36,1); pointer-events: auto;';
   // Insert before container so layout doesn't jump when container hides
   if (container && container.parentNode) {
     container.parentNode.insertBefore(host, container);

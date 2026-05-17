@@ -404,7 +404,6 @@ async function init() {
 }
 
 whenBodyReady(() => {
-  ensureNavToggle();
   init().catch((err) => console.error('[Paintbrush]', err));
 });
 
