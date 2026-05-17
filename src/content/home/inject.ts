@@ -60,7 +60,7 @@ export function mountHomeViewer(courseId: number): () => void {
     'bottom: 0',
     'overflow-y: auto',
     'background: #fafafa',
-    'z-index: 100',
+    'z-index: 1',
     'pointer-events: auto',
     'transition: right 300ms cubic-bezier(0.22,0.61,0.36,1)'
   ].join(';');

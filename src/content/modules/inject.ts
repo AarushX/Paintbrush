@@ -61,7 +61,7 @@ export function mountModulesViewer(courseId: number): () => void {
 
   const host = document.createElement('div');
   host.id = MODULES_HOST_ID;
-  host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: 84px; right: var(--pb-sidebar-w, 340px); bottom: 0; overflow-y: auto; background: #fafafa; z-index: 100; transition: right 300ms cubic-bezier(0.22,0.61,0.36,1); pointer-events: auto;';
+  host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: 84px; right: var(--pb-sidebar-w, 340px); bottom: 0; overflow-y: auto; background: #fafafa; z-index: 1; transition: right 300ms cubic-bezier(0.22,0.61,0.36,1); pointer-events: auto;';
   anchor.parentNode?.insertBefore(host, anchor);
 
   const shadow = host.attachShadow({ mode: 'open' });
