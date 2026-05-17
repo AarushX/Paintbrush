@@ -23,8 +23,24 @@ export async function fetchAllPages<T>(
   while (url) {
     const res: Response = await f(url, { signal: options.signal, credentials: 'include' });
     if (!res.ok) throw new CanvasApiError(`${res.status} ${res.statusText} on ${url}`, res.status);
-    const page = (await res.json()) as T[];
-    out.push(...page);
+    const raw = await res.json();
+    // Most Canvas list endpoints return a top-level array. A few wrap the
+    // results in an object (e.g. conversations with include_all_conversation_ids,
+    // or some search endpoints). Dig out the array shape we expect, or
+    // accept a single object as a one-item page.
+    let page: T[];
+    if (Array.isArray(raw)) {
+      page = raw as T[];
+    } else if (raw && typeof raw === 'object') {
+      const wrapped = (raw as Record<string, unknown>).conversations
+        ?? (raw as Record<string, unknown>).results
+        ?? (raw as Record<string, unknown>).items
+        ?? (raw as Record<string, unknown>).data;
+      page = Array.isArray(wrapped) ? (wrapped as T[]) : [];
+    } else {
+      page = [];
+    }
+    if (page.length > 0) out.push(...page);
     url = parseNextLink(res.headers.get('Link'));
   }
   return out;

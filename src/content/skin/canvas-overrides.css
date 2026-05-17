@@ -88,8 +88,37 @@
   flex-shrink: 0 !important;
 }
 
-/* Canvas tray styling intentionally REMOVED — let Canvas handle its
-   own slide-out popouts natively. */
+/* ------------------------------------------------------
+   Canvas tray (Courses / Account / Help / Inbox popouts).
+   Minimal, content-only restyling — we DO NOT touch the
+   tray container, its position, its background, its size,
+   or its z-index. Canvas owns all of that. We only restyle
+   the INNER links/text so they don't read as blue underlined
+   anchors against an otherwise modern UI.
+   ------------------------------------------------------ */
+
+[data-cid="Tray"] a,
+[data-cid="Tray"] a:visited,
+[data-cid="Tray"] [role="dialog"] a,
+[data-cid="Tray"] [role="dialog"] a:visited {
+  color: rgb(63 63 70) !important; /* zinc-700 */
+  text-decoration: none !important;
+  border-bottom: 0 !important;
+}
+
+[data-cid="Tray"] a *,
+[data-cid="Tray"] [role="dialog"] a * {
+  text-decoration: none !important;
+  border-bottom: 0 !important;
+}
+
+[data-cid="Tray"] a:hover,
+[data-cid="Tray"] [role="dialog"] a:hover {
+  color: var(--pb-brand-strong) !important;
+  background-color: var(--pb-brand-soft) !important;
+  text-decoration: none !important;
+  border-radius: 6px !important;
+}
 
 /* ------------------------------------------------------
    Hide Canvas's redundant To-Do / Coming Up / Recent Feedback
