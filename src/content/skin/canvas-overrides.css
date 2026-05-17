@@ -217,10 +217,14 @@
    ------------------------------------------------------ */
 
 @media (prefers-color-scheme: dark) {
+  /* Top-level surfaces */
+  html,
   body,
+  #application,
   #wrapper,
   #main,
   #content,
+  #not_right_side,
   .ic-Layout-watershed,
   .ic-Layout-page-content,
   .ic-app-main-content,
@@ -228,36 +232,141 @@
     background: #0a0a0b !important;
     color: rgb(228 228 231) !important;
   }
-  .user_content,
-  .show-content,
-  .description,
-  .syllabus,
-  .syllabus_body {
+
+  /* Page-level headers and action bars */
+  .header-bar,
+  .ic-Action-header,
+  .ic-Action-header__Primary,
+  .ic-Action-header__Secondary,
+  .ic-app-nav-toggle-and-crumbs,
+  #breadcrumbs,
+  #breadcrumbs ul,
+  #breadcrumbs li,
+  .ic-app-crumbs,
+  .ic-app-crumbs__path,
+  .page-header,
+  .ic-DashboardCard__header_image,
+  .Toolbar,
+  .toolbar {
+    background: #0a0a0b !important;
     color: rgb(228 228 231) !important;
-  }
-  .user_content h1, .user_content h2, .user_content h3, .user_content h4,
-  #content h1, #content h2, #content h3,
-  .show-content h1, .show-content h2, .show-content h3 {
-    color: rgb(244 244 245) !important;
-  }
-  .user_content a,
-  #content a:not(.btn):not(.Button) {
-    color: color-mix(in srgb, var(--pb-brand) 50%, #ffffff) !important;
-  }
-  .content-box,
-  .ic-Action-header__Heading,
-  table.ic-Table {
-    background: #18181b !important;
     border-color: rgb(39 39 42) !important;
   }
+
+  /* All headings inside Canvas content */
+  body h1, body h2, body h3, body h4, body h5, body h6,
+  .header-bar h1, .header-bar h2,
+  #content h1, #content h2, #content h3, #content h4,
+  .user_content h1, .user_content h2, .user_content h3, .user_content h4,
+  .show-content h1, .show-content h2, .show-content h3,
+  .ic-Action-header__Heading h1, .ic-Action-header__Heading h2,
+  .page-header h1, .page-header h2 {
+    color: rgb(250 250 250) !important;
+  }
+
+  /* Paragraphs, list items, generic text wrappers */
+  body p, body li, body td, body th, body label, body span, body small,
+  .user_content, .user_content p, .user_content li, .user_content td,
+  .show-content, .show-content p,
+  .description, .syllabus, .syllabus_body {
+    color: rgb(228 228 231) !important;
+  }
+
+  /* Canvas content area links — pick a readable light-brand variant */
+  body a:not(.btn):not(.Button):not(.btn-primary):not(.btn-secondary),
+  body a:not(.btn):not(.Button):visited,
+  .user_content a, #content a, .show-content a, .header-bar a {
+    color: color-mix(in srgb, var(--pb-brand) 55%, #ffffff) !important;
+  }
+  body a:hover:not(.btn):not(.Button) {
+    color: color-mix(in srgb, var(--pb-brand) 30%, #ffffff) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+  }
+
+  /* Generic hover surfaces — most Canvas elements hover to a light grey
+     by default; force them to a dark grey instead. */
+  body *:hover {
+    background-color: transparent;
+  }
+  body tr:hover,
+  body li:hover,
+  body .ic-Table tr:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+  }
+
+  /* Canvas content surfaces — cards, content boxes, panels */
+  .content-box,
+  .content-box-mini,
+  .ic-Action-header__Heading,
+  .ic-DashboardCard,
+  .ui-widget,
+  .ui-widget-content,
+  .Alert,
+  .alert {
+    background: #18181b !important;
+    color: rgb(228 228 231) !important;
+    border-color: rgb(39 39 42) !important;
+  }
+
+  /* Tables */
+  table.ic-Table,
+  table.roster,
+  table.assignment-list-content,
+  .ic-Table {
+    background: #18181b !important;
+    border-color: rgb(39 39 42) !important;
+    color: rgb(228 228 231) !important;
+  }
   table.ic-Table th,
-  table.ic-Table td {
+  table.ic-Table td,
+  table.roster th,
+  table.roster td {
     background: transparent !important;
     border-color: rgb(39 39 42) !important;
     color: rgb(228 228 231) !important;
   }
-  table.ic-Table thead th {
+  table.ic-Table thead th,
+  table.roster thead th {
     background: #27272a !important;
+    color: rgb(244 244 245) !important;
+  }
+  table.ic-Table tbody tr:hover,
+  table.roster tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+  }
+
+  /* Form inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="url"],
+  input[type="number"],
+  input[type="search"],
+  input[type="password"],
+  textarea,
+  select {
+    background: #18181b !important;
+    border-color: rgb(39 39 42) !important;
+    color: rgb(228 228 231) !important;
+  }
+  input[type="text"]::placeholder,
+  input[type="search"]::placeholder,
+  textarea::placeholder {
+    color: rgb(113 113 122) !important;
+  }
+
+  /* Modals / dialogs */
+  .ui-dialog,
+  .ic-Modal,
+  .ic-Modal__body {
+    background: #18181b !important;
+    color: rgb(228 228 231) !important;
+    border-color: rgb(39 39 42) !important;
+  }
+  .ui-dialog .ui-dialog-titlebar,
+  .ic-Modal__header {
+    background: #0a0a0b !important;
+    border-color: rgb(39 39 42) !important;
+    color: rgb(244 244 245) !important;
   }
 }
 
