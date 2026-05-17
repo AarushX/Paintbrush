@@ -227,6 +227,27 @@
   }
 }
 
+/* Global "view-link" Canvas anchors (data-cid="Link") — match by class +
+   common destination hrefs regardless of where they appear, since these
+   show up in trays, sidebars, and breadcrumb areas with the same
+   washed-out brand color. */
+a[data-cid="Link"][class*="-view-link"],
+a[class*="-view-link"][href="/courses"],
+a[class*="-view-link"][href="/groups"],
+a[class*="-view-link"][href="/all_courses"] {
+  color: color-mix(in srgb, var(--pb-brand) 30%, #18181b) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+@media (prefers-color-scheme: dark) {
+  a[data-cid="Link"][class*="-view-link"],
+  a[class*="-view-link"][href="/courses"],
+  a[class*="-view-link"][href="/groups"],
+  a[class*="-view-link"][href="/all_courses"] {
+    color: color-mix(in srgb, var(--pb-brand) 50%, #ffffff) !important;
+  }
+}
+
 /* Tray dark-mode (matches our viewer when OS prefers dark).
    Strategy: dark BG + clearly brighter cards for contrast. */
 @media (prefers-color-scheme: dark) {

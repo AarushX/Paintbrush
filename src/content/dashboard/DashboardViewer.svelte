@@ -15,15 +15,41 @@
   let loading = $state(true);
   let error = $state('');
 
+  // Drag-and-drop reordering. Persists a user-chosen order to
+  // chrome.storage.local so cards keep that arrangement next session.
+  const ORDER_KEY = 'paintbrushDashboardOrder';
+  let dragIndex = $state<number | null>(null);
+  let dragOverIndex = $state<number | null>(null);
+
+  async function loadOrder(): Promise<number[] | null> {
+    try {
+      const r = await chrome.storage.local.get(ORDER_KEY);
+      return Array.isArray(r?.[ORDER_KEY]) ? (r[ORDER_KEY] as number[]) : null;
+    } catch { return null; }
+  }
+  async function saveOrder(order: number[]) {
+    try { await chrome.storage.local.set({ [ORDER_KEY]: order }); } catch {}
+  }
+  function applyOrder(list: DashboardCard[], order: number[]): DashboardCard[] {
+    const byId = new Map(list.map(c => [c.id, c]));
+    const out: DashboardCard[] = [];
+    for (const id of order) {
+      const c = byId.get(id);
+      if (c) { out.push(c); byId.delete(id); }
+    }
+    for (const c of byId.values()) out.push(c); // append any new courses
+    return out;
+  }
+
   onMount(async () => {
     try {
-      const [s, c] = await Promise.all([
+      const [s, c, savedOrder] = await Promise.all([
         fetchSelf().catch(() => null),
-        fetchDashboardCards()
+        fetchDashboardCards(),
+        loadOrder()
       ]);
       self = s;
-      cards = c;
-      // Now fetch planner + announcements + scores in parallel; non-fatal failures
+      cards = savedOrder ? applyOrder(c, savedOrder) : c;
       const courseIds = c.map(card => card.id);
       const [p, a, csc] = await Promise.all([
         fetchPlanner().catch(() => []),
@@ -39,6 +65,37 @@
       loading = false;
     }
   });
+
+  function onDragStart(e: DragEvent, idx: number) {
+    dragIndex = idx;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(idx));
+    }
+  }
+  function onDragOver(e: DragEvent, idx: number) {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    dragOverIndex = idx;
+  }
+  function onDragLeave() {
+    dragOverIndex = null;
+  }
+  function onDrop(e: DragEvent, idx: number) {
+    e.preventDefault();
+    if (dragIndex == null || dragIndex === idx) { dragIndex = null; dragOverIndex = null; return; }
+    const next = [...cards];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(idx, 0, moved);
+    cards = next;
+    saveOrder(next.map(c => c.id));
+    dragIndex = null;
+    dragOverIndex = null;
+  }
+  function onDragEnd() {
+    dragIndex = null;
+    dragOverIndex = null;
+  }
 
   function greeting(): string {
     const h = new Date().getHours();
@@ -263,13 +320,29 @@
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center text-sm text-zinc-400">No active courses.</div>
           {:else}
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {#each cards as card (card.id)}
+              {#each cards as card, idx (card.id)}
                 {@const score = scoreById.get(card.id)}
                 {@const cc = colorFor(card)}
+                {@const isDragging = dragIndex === idx}
+                {@const isDragOver = dragOverIndex === idx && dragIndex !== idx}
                 <a href={card.href}
-                   class="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 transition-all hover:-translate-y-0.5">
+                   draggable="true"
+                   ondragstart={(e) => onDragStart(e, idx)}
+                   ondragover={(e) => onDragOver(e, idx)}
+                   ondragleave={onDragLeave}
+                   ondrop={(e) => onDrop(e, idx)}
+                   ondragend={onDragEnd}
+                   class={`group relative rounded-xl border bg-white dark:bg-zinc-900 overflow-hidden transition-all
+                     ${isDragging ? 'opacity-40 scale-95' : 'hover:shadow-md hover:-translate-y-0.5'}
+                     ${isDragOver
+                       ? 'border-[var(--pb-brand)] ring-2 ring-[var(--pb-brand)] ring-offset-2'
+                       : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'}`}
+                   style="cursor: grab;">
                   <div class="h-20 relative" style={`background-color: ${cc}; background-image: ${card.image ? `url('${card.image}')` : 'none'}; background-size: cover; background-position: center;`}>
                     <div class="absolute inset-0" style={`background: linear-gradient(135deg, ${cc}aa, transparent 70%);`}></div>
+                    <div class="absolute top-2 left-2 p-1 rounded-md bg-white/80 dark:bg-black/40 backdrop-blur-sm text-zinc-600 dark:text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" title="Drag to reorder" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                    </div>
                     {#if score != null}
                       <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-white/90 dark:bg-black/40 backdrop-blur-sm text-[11px] font-semibold" style="color: var(--pb-brand-strong);">
                         {score}%
@@ -283,14 +356,14 @@
                       <div class="text-[11px] text-zinc-500 mt-0.5 truncate">{displaySubtitle(card)}</div>
                     {/if}
                     {#if card.links && card.links.length > 0}
-                      <div class="flex items-center gap-1 mt-3">
-                        {#each card.links.filter(l => !l.hidden).slice(0, 4) as link}
+                      <div class="flex flex-wrap items-center gap-1 mt-3">
+                        {#each card.links.filter(l => !l.hidden).slice(0, 6) as link}
                           <button
                              type="button"
                              onclick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = link.path; }}
-                             class="text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded text-zinc-500 hover:text-[var(--pb-brand-strong)] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                             class="text-[10px] font-medium px-2 py-0.5 rounded text-zinc-500 hover:text-[var(--pb-brand-strong)] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap"
                              title={link.label}>
-                            {link.label.slice(0, 4)}
+                            {link.label}
                           </button>
                         {/each}
                       </div>

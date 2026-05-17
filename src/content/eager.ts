@@ -160,17 +160,31 @@ new MutationObserver(measureNavWidth).observe(document.documentElement, {
   attributes: true, subtree: true, attributeFilter: ['class', 'style', 'data-collapsed', 'aria-expanded']
 });
 
-// Safety net: if data-pb-page was set but no Paintbrush viewer root mounted
-// within 5 seconds, undo the eager hide so Canvas's native content shows.
-// Prevents any page from being permanently blanked when a viewer fails.
+// Safety net against blank pages. Checks two failure modes:
+//   1. No paintbrush-*-root mounted at all
+//   2. A root mounted but its shadow DOM has no visible content (mount
+//      succeeded but viewer rendered nothing — API error, Svelte crash,
+//      empty data set)
+// In either case, remove the root + clear data-pb-page so Canvas's
+// native page becomes visible again. Runs at 3s and 6s for safety.
 function ensureNotBlank() {
   const pageType = document.documentElement.getAttribute('data-pb-page');
   if (!pageType) return;
-  const anyRoot = document.querySelector('[id^="paintbrush-"][id$="-root"]:not(#paintbrush-root)');
-  if (anyRoot) return; // viewer mounted; we're fine
-  console.warn('[Paintbrush] viewer failed to mount within 5s; restoring Canvas content');
+  const roots = document.querySelectorAll<HTMLElement>('[id^="paintbrush-"][id$="-root"]:not(#paintbrush-root)');
+  let healthy = false;
+  for (const root of roots) {
+    const shadow = root.shadowRoot;
+    if (!shadow) continue;
+    const txt = (shadow.textContent ?? '').trim();
+    // A healthy viewer has at least *some* visible text rendered.
+    if (txt.length > 20) { healthy = true; break; }
+  }
+  if (healthy) return;
+  console.warn('[Paintbrush] viewer empty or missing; restoring Canvas content');
   document.documentElement.removeAttribute('data-pb-page');
+  for (const root of roots) root.remove();
 }
-setTimeout(ensureNotBlank, 5000);
+setTimeout(ensureNotBlank, 3000);
+setTimeout(ensureNotBlank, 6000);
 
 console.log('[Paintbrush:eager]', 'data-pb-page =', t ?? '(none)');
