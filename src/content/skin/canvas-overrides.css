@@ -90,20 +90,65 @@
 
 /* ------------------------------------------------------
    Canvas tray (Courses / Account / Help / Inbox popouts).
-   Minimal, content-only restyling — we DO NOT touch the
-   tray container, its position, its background, its size,
-   or its z-index. Canvas owns all of that. We only restyle
-   the INNER links/text so they don't read as blue underlined
-   anchors against an otherwise modern UI.
+   Content-only styling — we only touch elements INSIDE
+   [data-cid="Tray"] [role="dialog"]. We never touch the
+   outer wrapper, its position, size, or z-index. Canvas
+   owns layout.
    ------------------------------------------------------ */
 
+/* Brand-tinted glassy background on the dialog interior to match
+   the Paintbrush sidebar aesthetic. */
+[data-cid="Tray"] [role="dialog"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pb-brand) 7%, #ffffff),
+    #ffffff 80%
+  ) !important;
+  border-left: 0 !important;
+}
+
+/* Each course / item rendered as a card. */
+[data-cid="Tray"] [role="dialog"] li {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  margin: 6px 10px !important;
+  padding: 0 !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease !important;
+  overflow: hidden;
+}
+
+[data-cid="Tray"] [role="dialog"] li:hover {
+  border-color: color-mix(in srgb, var(--pb-brand) 50%, transparent) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--pb-brand) 18%, transparent) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Inside each card: hide the course-code subtitle and term line.
+   Keep only the first child (the course name). */
+[data-cid="Tray"] [role="dialog"] li a > *:not(:first-child),
+[data-cid="Tray"] [role="dialog"] li a > div ~ div,
+[data-cid="Tray"] [role="dialog"] li a > span ~ span,
+[data-cid="Tray"] [role="dialog"] li [class*="Subhead"],
+[data-cid="Tray"] [role="dialog"] li [class*="subhead"],
+[data-cid="Tray"] [role="dialog"] li [class*="Term"],
+[data-cid="Tray"] [role="dialog"] li [class*="SubInfo"] {
+  display: none !important;
+}
+
+/* Link styling inside cards — no underline, modern padding/typography */
 [data-cid="Tray"] a,
 [data-cid="Tray"] a:visited,
 [data-cid="Tray"] [role="dialog"] a,
 [data-cid="Tray"] [role="dialog"] a:visited {
-  color: rgb(63 63 70) !important; /* zinc-700 */
+  color: rgb(39 39 42) !important; /* zinc-800 */
   text-decoration: none !important;
   border-bottom: 0 !important;
+  font-weight: 500 !important;
+  padding: 12px 14px !important;
+  display: block !important;
+  line-height: 1.35 !important;
 }
 
 [data-cid="Tray"] a *,
@@ -112,12 +157,18 @@
   border-bottom: 0 !important;
 }
 
-[data-cid="Tray"] a:hover,
-[data-cid="Tray"] [role="dialog"] a:hover {
+[data-cid="Tray"] li:hover a,
+[data-cid="Tray"] [role="dialog"] li:hover a {
   color: var(--pb-brand-strong) !important;
-  background-color: var(--pb-brand-soft) !important;
-  text-decoration: none !important;
-  border-radius: 6px !important;
+}
+
+/* "All Courses" / footer-style links — keep them recognizable but
+   styled. They typically render as bare anchors not wrapped in li. */
+[data-cid="Tray"] [role="dialog"] > a,
+[data-cid="Tray"] [role="dialog"] [class*="TrayFooter"] a,
+[data-cid="Tray"] [role="dialog"] [class*="ic-NavigationTrayCourse__Link--all"] {
+  color: var(--pb-brand-strong) !important;
+  font-weight: 600 !important;
 }
 
 /* ------------------------------------------------------
