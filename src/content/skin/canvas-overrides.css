@@ -125,15 +125,24 @@
   transform: translateY(-1px) !important;
 }
 
-/* Inside each card: hide the course-code subtitle and term line.
-   Keep only the first child (the course name). */
-[data-cid="Tray"] [role="dialog"] li a > *:not(:first-child),
-[data-cid="Tray"] [role="dialog"] li a > div ~ div,
-[data-cid="Tray"] [role="dialog"] li a > span ~ span,
-[data-cid="Tray"] [role="dialog"] li [class*="Subhead"],
-[data-cid="Tray"] [role="dialog"] li [class*="subhead"],
-[data-cid="Tray"] [role="dialog"] li [class*="Term"],
-[data-cid="Tray"] [role="dialog"] li [class*="SubInfo"] {
+/* Inside each card: hide the course-code subtitle and term line via
+   many redundant strategies — Canvas's nesting varies build-to-build.
+   The course title is whichever child contains the link itself (or the
+   first child of the link). Everything else inside the li is hidden. */
+[data-cid="Tray"] [role="dialog"] li > *:not(:first-child),
+[data-cid="Tray"] [role="dialog"] li > a > *:not(:first-child),
+[data-cid="Tray"] [role="dialog"] li > a > div ~ div,
+[data-cid="Tray"] [role="dialog"] li > a > span ~ span,
+[data-cid="Tray"] [role="dialog"] li a + div,
+[data-cid="Tray"] [role="dialog"] li a + span,
+[data-cid="Tray"] [role="dialog"] li a + p,
+[data-cid="Tray"] [role="dialog"] li > p,
+[data-cid="Tray"] [role="dialog"] li > small,
+[data-cid="Tray"] [role="dialog"] li [class*="Subhead" i],
+[data-cid="Tray"] [role="dialog"] li [class*="subtitle" i],
+[data-cid="Tray"] [role="dialog"] li [class*="Term" i],
+[data-cid="Tray"] [role="dialog"] li [class*="SubInfo" i],
+[data-cid="Tray"] [role="dialog"] li [class*="Section" i] {
   display: none !important;
 }
 
@@ -169,6 +178,36 @@
 [data-cid="Tray"] [role="dialog"] [class*="ic-NavigationTrayCourse__Link--all"] {
   color: var(--pb-brand-strong) !important;
   font-weight: 600 !important;
+}
+
+/* Tray dark-mode (matches our viewer when OS prefers dark) */
+@media (prefers-color-scheme: dark) {
+  [data-cid="Tray"] [role="dialog"] {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--pb-brand) 18%, #0a0a0b),
+      #0a0a0b 80%
+    ) !important;
+    color: rgb(228 228 231) !important;
+  }
+  [data-cid="Tray"] [role="dialog"] li {
+    background: rgba(39, 39, 42, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  }
+  [data-cid="Tray"] [role="dialog"] li:hover {
+    border-color: color-mix(in srgb, var(--pb-brand) 60%, transparent) !important;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--pb-brand) 30%, transparent) !important;
+  }
+  [data-cid="Tray"] a,
+  [data-cid="Tray"] [role="dialog"] a {
+    color: rgb(228 228 231) !important;
+  }
+  [data-cid="Tray"] [role="dialog"] h1,
+  [data-cid="Tray"] [role="dialog"] h2,
+  [data-cid="Tray"] [role="dialog"] h3 {
+    color: rgb(244 244 245) !important;
+  }
 }
 
 /* ------------------------------------------------------
