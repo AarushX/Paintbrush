@@ -43,7 +43,10 @@
   $effect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent) => {
-      if (rootEl && !rootEl.contains(e.target as Node)) { open = false; query = ''; }
+      // The sidebar lives in a shadow root, so `e.target` on the document
+      // listener is retargeted to the shadow host. composedPath() sees the
+      // real click path through the shadow boundary.
+      if (rootEl && !e.composedPath().includes(rootEl)) { open = false; query = ''; }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { open = false; query = ''; }
