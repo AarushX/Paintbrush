@@ -2,6 +2,21 @@
   import { onMount } from 'svelte';
   import { fetchCourseFolders, fetchFolderFiles, fetchFolderSubfolders, fetchRootFolder } from './api';
   import { downloadAllFiles } from '../downloader/files';
+  import { downloadFileFromUrl } from '../downloader/zip';
+
+  let downloadingId = $state<number | null>(null);
+
+  async function handleFileDownload(f: FileFull) {
+    if (downloadingId === f.id) return;
+    downloadingId = f.id;
+    try {
+      await downloadFileFromUrl(f.url, f.display_name);
+    } catch (err) {
+      console.error('[Paintbrush] file download failed', err);
+    } finally {
+      downloadingId = null;
+    }
+  }
   import type { FolderFull, FileFull } from '../../lib/types';
 
   let { courseId, initialFolderPath }: { courseId: number; initialFolderPath: string } = $props();
@@ -234,9 +249,13 @@
               <div class="text-sm font-medium truncate group-hover:underline" style="text-underline-offset: 3px;">{f.display_name}</div>
               <div class="text-[11px] text-zinc-500 truncate">{fmtSize(f.size)}{f.updated_at ? ` · ${fmtDate(f.updated_at)}` : ''}</div>
             </a>
-            <a href={f.url} download={f.display_name} class="p-1.5 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" title="Download">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
-            </a>
+            <button type="button"
+                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); handleFileDownload(f); }}
+                    disabled={downloadingId === f.id}
+                    class="p-1.5 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60"
+                    title="Download">
+              <svg class={`w-3.5 h-3.5 ${downloadingId === f.id ? 'animate-pulse' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+            </button>
           </div>
         {/each}
       </div>

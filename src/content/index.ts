@@ -39,6 +39,7 @@ function applyEagerHide() {
     else if (/\/courses\/\d+\/modules\/?$/.test(u.pathname)) t = 'modules';
     else if (/\/courses\/\d+\/users\/?$/.test(u.pathname)) t = 'people';
     else if (/\/courses\/\d+\/grades\/?$/.test(u.pathname)) t = 'grades';
+    else if (/\/courses\/\d+\/files\/\d+\/?(\?|$)/.test(u.pathname)) t = 'file-preview';
     else if (/\/courses\/\d+\/files(\b|\/|\?)/.test(u.pathname)) t = 'files';
     else if (/\/courses\/\d+\/quizzes\/?$/.test(u.pathname)) t = 'quizzes';
     else if (/\/calendar2?\/?$/.test(u.pathname)) t = 'calendar';
@@ -402,6 +403,7 @@ async function init() {
       syncCalendarMount();
       syncInboxMount();
       syncFilesMount();
+      syncFilePreviewMount();
       syncQuizzesMount();
     }
   }, 500);
@@ -517,8 +519,9 @@ function syncInboxMount() {
 syncInboxMount();
 
 // === files+quizzes viewer additions ===
-import { isFilesPage as isFilesViewerPage, parseFilesFolderPath, isQuizzesListPage } from '../lib/course-context';
+import { isFilesPage as isFilesViewerPage, parseFilesFolderPath, parseFilePreviewUrl, isQuizzesListPage } from '../lib/course-context';
 import { mountFilesViewer } from './files/inject';
+import { mountFilePreview } from './files/preview-inject';
 import { mountQuizzesViewer } from './quizzes/inject';
 
 let filesCleanup: (() => void) | null = null;
@@ -533,6 +536,21 @@ function syncFilesMount() {
   if (!key || !parsed) return;
   requestAnimationFrame(() => {
     filesCleanup = mountFilesViewer(parsed.courseId, parsed.folderPath);
+  });
+}
+
+let filePreviewCleanup: (() => void) | null = null;
+let lastFilePreviewKey: string | null = null;
+function syncFilePreviewMount() {
+  const parsed = parseFilePreviewUrl(location.href);
+  let key: string | null = null;
+  if (parsed) key = `${parsed.courseId}:${parsed.fileId}`;
+  if (key === lastFilePreviewKey) return;
+  if (filePreviewCleanup) { filePreviewCleanup(); filePreviewCleanup = null; }
+  lastFilePreviewKey = key;
+  if (!key || !parsed) return;
+  requestAnimationFrame(() => {
+    filePreviewCleanup = mountFilePreview(parsed.courseId, parsed.fileId);
   });
 }
 
@@ -555,4 +573,5 @@ function syncQuizzesMount() {
 }
 
 syncFilesMount();
+syncFilePreviewMount();
 syncQuizzesMount();

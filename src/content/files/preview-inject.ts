@@ -1,8 +1,8 @@
 import { mount, unmount } from 'svelte';
-import AnnouncementList from './AnnouncementList.svelte';
+import FilePreview from './FilePreview.svelte';
 import tailwindCss from '../../styles/tailwind.css?inline';
 
-const HOST_ID = 'paintbrush-announcement-root';
+const HOST_ID = 'paintbrush-file-preview-root';
 
 const HIDE_SELECTORS = [
   '#content',
@@ -43,7 +43,7 @@ function detectBrand() {
   return null;
 }
 
-export function mountAnnouncementList(courseId: number): () => void {
+export function mountFilePreview(courseId: number, fileId: number): () => void {
   if (document.getElementById(HOST_ID)) return () => {};
 
   const anchor = document.querySelector<HTMLElement>('#main')
@@ -85,7 +85,23 @@ export function mountAnnouncementList(courseId: number): () => void {
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   mq.addEventListener('change', applyDarkMode);
 
-  const app = mount(AnnouncementList, { target: appRoot, props: { courseId } });
+  let revertOnce = false;
+  function showCanvasUI() {
+    if (revertOnce) return;
+    revertOnce = true;
+    host.style.display = 'none';
+    restoreCanvasUI();
+    document.documentElement.removeAttribute('data-pb-page');
+  }
+
+  const app = mount(FilePreview, {
+    target: appRoot,
+    props: {
+      courseId,
+      fileId,
+      onShowCanvas: showCanvasUI
+    }
+  });
 
   return () => {
     unmount(app);

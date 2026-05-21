@@ -17,6 +17,7 @@ function pageTypeFor(url: string): string | null {
     if (/\/courses\/\d+\/modules\/?$/.test(u.pathname)) return 'modules';
     if (/\/courses\/\d+\/users\/?$/.test(u.pathname)) return 'people';
     if (/\/courses\/\d+\/grades\/?$/.test(u.pathname)) return 'grades';
+    if (/\/courses\/\d+\/files\/\d+\/?(\?|$)/.test(u.pathname)) return 'file-preview';
     if (/\/courses\/\d+\/files(\b|\/|\?)/.test(u.pathname)) return 'files';
     if (/\/courses\/\d+\/quizzes\/?$/.test(u.pathname)) return 'quizzes';
     if (/\/calendar2?\/?$/.test(u.pathname)) return 'calendar';
@@ -170,14 +171,31 @@ new MutationObserver(measureNavWidth).observe(document.documentElement, {
 function ensureNotBlank() {
   const pageType = document.documentElement.getAttribute('data-pb-page');
   if (!pageType) return;
+
   const roots = document.querySelectorAll<HTMLElement>('[id^="paintbrush-"][id$="-root"]:not(#paintbrush-root)');
+  
+  // If no root is mounted yet, and the document is still loading, index.ts (at document_idle)
+  // hasn't executed. Postpone the safety check.
+  if (roots.length === 0 && document.readyState !== 'complete') {
+    setTimeout(ensureNotBlank, 2000);
+    return;
+  }
+
   let healthy = false;
   for (const root of roots) {
     const shadow = root.shadowRoot;
     if (!shadow) continue;
-    const txt = (shadow.textContent ?? '').trim();
-    // A healthy viewer has at least *some* visible text rendered.
-    if (txt.length > 20) { healthy = true; break; }
+    // Exclude style and script tags from textContent check
+    const nonStyleChildren = Array.from(shadow.children).filter(
+      el => el.tagName !== 'STYLE' && el.tagName !== 'SCRIPT'
+    );
+    const hasRenderedElements = nonStyleChildren.some(el => el.tagName === 'DIV' && el.children.length > 0);
+    const txt = nonStyleChildren.map(el => el.textContent ?? '').join('').trim();
+    // A healthy viewer has some actual rendered child elements, or some visible text content.
+    if (hasRenderedElements || txt.length > 5) {
+      healthy = true;
+      break;
+    }
   }
   if (healthy) return;
   console.warn('[Paintbrush] viewer empty or missing; restoring Canvas content');

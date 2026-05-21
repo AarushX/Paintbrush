@@ -3,18 +3,28 @@ import GradesViewer from './GradesViewer.svelte';
 import tailwindCss from '../../styles/tailwind.css?inline';
 
 const HOST_ID = 'paintbrush-grades-root';
-const CONTAINER_SELECTORS = [
-  '#main #content',
+
+const HIDE_SELECTORS = [
   '#content',
-  '#main'
+  '#main',
+  '#right-side-wrapper'
 ];
 
-function findContainer(): HTMLElement | null {
-  for (const sel of CONTAINER_SELECTORS) {
-    const el = document.querySelector<HTMLElement>(sel);
-    if (el) return el;
+interface Hidden { el: HTMLElement; prev: string }
+const hidden: Hidden[] = [];
+
+function hideCanvasUI(): void {
+  for (const sel of HIDE_SELECTORS) {
+    document.querySelectorAll<HTMLElement>(sel).forEach(el => {
+      hidden.push({ el, prev: el.style.display });
+      el.style.display = 'none';
+    });
   }
-  return null;
+}
+
+function restoreCanvasUI(): void {
+  for (const { el, prev } of hidden) el.style.display = prev;
+  hidden.length = 0;
 }
 
 function detectBrand() {
@@ -36,18 +46,15 @@ function detectBrand() {
 export function mountGradesViewer(courseId: number): () => void {
   if (document.getElementById(HOST_ID)) return () => {};
 
-  const container = findContainer();
-  const prevDisplay = container?.style.display ?? '';
-  if (container) container.style.display = 'none';
+  const anchor = document.querySelector<HTMLElement>('#main')
+    ?? document.querySelector<HTMLElement>('#content')
+    ?? document.body;
+  hideCanvasUI();
 
   const host = document.createElement('div');
   host.id = HOST_ID;
   host.style.cssText = 'all: initial; display: block; position: fixed; top: 0; left: var(--pb-left-inset, 84px); right: var(--pb-sidebar-w, 340px); bottom: 0; overflow-y: auto; background: transparent; z-index: 1; transition: right 300ms cubic-bezier(0.22,0.61,0.36,1); pointer-events: auto;';
-  if (container && container.parentNode) {
-    container.parentNode.insertBefore(host, container);
-  } else {
-    document.body.appendChild(host);
-  }
+  anchor.parentNode?.insertBefore(host, anchor);
 
   const shadow = host.attachShadow({ mode: 'open' });
   const styleEl = document.createElement('style');
@@ -83,7 +90,7 @@ export function mountGradesViewer(courseId: number): () => void {
   return () => {
     unmount(app);
     host.remove();
-    if (container) container.style.display = prevDisplay;
+    restoreCanvasUI();
     mq.removeEventListener('change', applyDarkMode);
   };
 }

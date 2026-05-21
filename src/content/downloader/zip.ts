@@ -52,3 +52,22 @@ export function triggerDownload(blob: Blob, filename: string): void {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
+
+/**
+ * Download a remote file under the user's chosen filename.
+ *
+ * Why this exists instead of plain <a href download="...">: the HTML5
+ * `download` attribute is silently ignored for cross-origin URLs (it
+ * would let any page force-download anything from any other site, so
+ * browsers reject it for safety). Canvas's `file.url` is a presigned
+ * URL on a different origin (inst-fs-iad-prod.inscloudgate.net or S3),
+ * so direct anchor downloads open the file in the tab instead of
+ * saving with the right name. Fetching as a blob first and then
+ * downloading via an object URL (same-origin) bypasses the restriction.
+ */
+export async function downloadFileFromUrl(url: string, filename: string): Promise<void> {
+  const res = await fetch(url, { credentials: 'include' });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText} fetching ${url}`);
+  const blob = await res.blob();
+  triggerDownload(blob, filename);
+}

@@ -119,6 +119,16 @@ export function parseFilesFolderPath(url: string): { courseId: number; folderPat
   }
 }
 
+export function parseFilePreviewUrl(url: string): { courseId: number; fileId: number } | null {
+  try {
+    const m = new URL(url).pathname.match(/\/courses\/(\d+)\/files\/(\d+)\/?$/);
+    if (!m) return null;
+    return { courseId: Number(m[1]), fileId: Number(m[2]) };
+  } catch {
+    return null;
+  }
+}
+
 // === quizzes-viewer additions ===
 
 export function isQuizzesListPage(url: string): boolean {
