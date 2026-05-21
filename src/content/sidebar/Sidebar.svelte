@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import TodoItem from './TodoItem.svelte';
   import CourseSelect from './CourseSelect.svelte';
+  import SectionMenu from '../course-nav/SectionMenu.svelte';
   import { parseCourseFromUrl } from '../../lib/course-context';
   import { fetchAllPages, CanvasApiError } from '../../lib/canvas-api';
   import { fetchDashboardCards } from '../dashboard/api';
@@ -405,6 +406,15 @@
         </button>
       </div>
     </header>
+
+    <!-- Course page navigator — jump to any page of the course you're in -->
+    {#if currentCourseId != null}
+      <div class="px-3 pt-2.5">
+        {#key currentCourseId}
+          <SectionMenu courseId={currentCourseId} />
+        {/key}
+      </div>
+    {/if}
 
     <!-- View tabs: To Do / Files -->
     {#if courses.length > 0}

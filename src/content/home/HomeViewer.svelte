@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import CourseNav from '../course-nav/CourseNav.svelte';
   import { fetchCourseFull, fetchUpcomingAssignments, fetchRecentAnnouncements } from './api';
   import { exportEntireCourse } from '../downloader/course';
   import type { CourseWithMeta, AssignmentListItem, Announcement } from '../../lib/types';
@@ -69,7 +68,6 @@
 </script>
 
 <div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
-  <CourseNav {courseId} />
   <div class="max-w-3xl mx-auto px-6 py-8">
     {#if loading && !course}
       <div class="py-16 text-center text-sm text-zinc-400">Loading course…</div>

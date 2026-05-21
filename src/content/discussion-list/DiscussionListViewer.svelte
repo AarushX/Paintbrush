@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import CourseNav from '../course-nav/CourseNav.svelte';
   import { fetchDiscussions } from './api';
   import type { DiscussionTopic } from '../../lib/types';
 
@@ -77,7 +76,6 @@
 </script>
 
 <div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
-  <CourseNav {courseId} />
   <div class="max-w-3xl mx-auto px-6 py-8">
     <header class="mb-6">
       <div class="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-zinc-400 mb-2">
