@@ -26,3 +26,7 @@ export function fetchRootFolder(courseId: number, signal?: AbortSignal): Promise
 export function fetchFileDetail(fileId: number, signal?: AbortSignal): Promise<FileFull> {
   return jsonGet<FileFull>(`/api/v1/files/${fileId}`, signal);
 }
+
+export function fetchFolder(folderId: number, signal?: AbortSignal): Promise<FolderFull> {
+  return jsonGet<FolderFull>(`/api/v1/folders/${folderId}`, signal);
+}

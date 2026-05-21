@@ -94,11 +94,15 @@ export function mountFilePreview(courseId: number, fileId: number): () => void {
     document.documentElement.removeAttribute('data-pb-page');
   }
 
+  const docPreviewEl = document.getElementById('doc_preview');
+  const canvadocSessionUrl = docPreviewEl?.getAttribute('data-canvadoc_session_url') ?? null;
+
   const app = mount(FilePreview, {
     target: appRoot,
     props: {
       courseId,
       fileId,
+      canvadocSessionUrl,
       onShowCanvas: showCanvasUI
     }
   });
