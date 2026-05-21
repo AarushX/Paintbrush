@@ -89,7 +89,7 @@
 </script>
 
 <div class={`relative w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans ${previewFileId != null ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
-  <div class="max-w-3xl mx-auto px-6 py-8">
+  <div class="max-w-5xl mx-auto px-6 py-8">
     <header class="mb-6 flex items-center justify-between gap-3 flex-wrap">
       <div class="min-w-0">
         <div class="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-zinc-400 mb-2">

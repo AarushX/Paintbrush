@@ -11,6 +11,8 @@ function pageTypeFor(url: string): string | null {
     if (u.pathname.startsWith('/login')) return null;
     if (/\/courses\/\d+\/discussion_topics\/\d+/.test(u.pathname)) return 'discussion';
     if (/\/courses\/\d+\/discussion_topics\/?$/.test(u.pathname)) return 'discussions-list';
+    if (/\/courses\/\d+\/assignments\/syllabus\/?(\?|$)/.test(u.pathname)) return 'syllabus';
+    if (/\/courses\/\d+\/collaborations\/?(\?|$)/.test(u.pathname)) return 'collaborations';
     if (/\/courses\/\d+\/assignments\/\d+/.test(u.pathname)) return 'assignment';
     if (/\/courses\/\d+\/assignments\/?$/.test(u.pathname)) return 'assignments';
     if (/\/courses\/\d+\/announcements\/?$/.test(u.pathname)) return 'announcements';

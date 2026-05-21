@@ -33,6 +33,8 @@ function applyEagerHide() {
     else if (u.pathname.startsWith('/login')) t = null;
     else if (/\/courses\/\d+\/discussion_topics\/\d+/.test(u.pathname)) t = 'discussion';
     else if (/\/courses\/\d+\/discussion_topics\/?$/.test(u.pathname)) t = 'discussions-list';
+    else if (/\/courses\/\d+\/assignments\/syllabus\/?(\?|$)/.test(u.pathname)) t = 'syllabus';
+    else if (/\/courses\/\d+\/collaborations\/?(\?|$)/.test(u.pathname)) t = 'collaborations';
     else if (/\/courses\/\d+\/assignments\/\d+/.test(u.pathname)) t = 'assignment';
     else if (/\/courses\/\d+\/assignments\/?$/.test(u.pathname)) t = 'assignments';
     else if (/\/courses\/\d+\/announcements\/?$/.test(u.pathname)) t = 'announcements';
@@ -405,6 +407,8 @@ async function init() {
       syncFilesMount();
       syncFilePreviewMount();
       syncQuizzesMount();
+      syncSyllabusMount();
+      syncCollaborationsMount();
     }
   }, 500);
 
@@ -519,10 +523,12 @@ function syncInboxMount() {
 syncInboxMount();
 
 // === files+quizzes viewer additions ===
-import { isFilesPage as isFilesViewerPage, parseFilesFolderPath, parseFilePreviewUrl, isQuizzesListPage } from '../lib/course-context';
+import { isFilesPage as isFilesViewerPage, parseFilesFolderPath, parseFilePreviewUrl, isQuizzesListPage, isSyllabusPage, isCollaborationsPage } from '../lib/course-context';
 import { mountFilesViewer } from './files/inject';
 import { mountFilePreview } from './files/preview-inject';
 import { mountQuizzesViewer } from './quizzes/inject';
+import { mountSyllabusViewer } from './syllabus/inject';
+import { mountCollaborationsViewer } from './collaborations/inject';
 
 let filesCleanup: (() => void) | null = null;
 let lastFilesKey: string | null = null;
@@ -572,6 +578,44 @@ function syncQuizzesMount() {
   });
 }
 
+let syllabusCleanup: (() => void) | null = null;
+let lastSyllabusKey: string | null = null;
+function syncSyllabusMount() {
+  let key: string | null = null;
+  if (isSyllabusPage(location.href)) {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) key = String(cid);
+  }
+  if (key === lastSyllabusKey) return;
+  if (syllabusCleanup) { syllabusCleanup(); syllabusCleanup = null; }
+  lastSyllabusKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) syllabusCleanup = mountSyllabusViewer(cid);
+  });
+}
+
+let collaborationsCleanup: (() => void) | null = null;
+let lastCollaborationsKey: string | null = null;
+function syncCollaborationsMount() {
+  let key: string | null = null;
+  if (isCollaborationsPage(location.href)) {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) key = String(cid);
+  }
+  if (key === lastCollaborationsKey) return;
+  if (collaborationsCleanup) { collaborationsCleanup(); collaborationsCleanup = null; }
+  lastCollaborationsKey = key;
+  if (!key) return;
+  requestAnimationFrame(() => {
+    const cid = parseCourseFromUrl(location.href);
+    if (cid != null) collaborationsCleanup = mountCollaborationsViewer(cid);
+  });
+}
+
 syncFilesMount();
 syncFilePreviewMount();
 syncQuizzesMount();
+syncSyllabusMount();
+syncCollaborationsMount();

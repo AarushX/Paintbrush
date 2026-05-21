@@ -151,7 +151,7 @@
 </script>
 
 <div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
-  <div class="max-w-3xl mx-auto px-6 py-8">
+  <div class="max-w-5xl mx-auto px-6 py-8">
     <header class="mb-6">
       <div class="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-zinc-400 mb-2">
         <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pb-brand);"></span>

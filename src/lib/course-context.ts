@@ -138,3 +138,21 @@ export function isQuizzesListPage(url: string): boolean {
     return false;
   }
 }
+
+// === syllabus/collaborations additions ===
+
+export function isSyllabusPage(url: string): boolean {
+  try {
+    return /\/courses\/\d+\/assignments\/syllabus\/?(\?|$)/.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
+export function isCollaborationsPage(url: string): boolean {
+  try {
+    return /\/courses\/\d+\/collaborations\/?(\?|$)/.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}

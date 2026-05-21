@@ -73,7 +73,7 @@
 </script>
 
 <div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
-  <div class="max-w-3xl mx-auto px-6 py-8">
+  <div class="max-w-5xl mx-auto px-6 py-8">
     {#if loading && !assignment}
       <div class="py-16 text-center text-sm text-zinc-400">Loading assignment…</div>
     {:else if error && !assignment}

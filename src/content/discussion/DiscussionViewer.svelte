@@ -20,7 +20,7 @@
 </script>
 
 <div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
-  <div class="max-w-3xl mx-auto px-6 py-8">
+  <div class="max-w-5xl mx-auto px-6 py-8">
     {#if discussionState.loading && !discussionState.topic}
       <div class="flex items-center justify-center py-20 text-sm text-zinc-400">
         <svg class="w-5 h-5 animate-spin mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
