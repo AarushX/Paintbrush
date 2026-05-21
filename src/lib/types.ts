@@ -221,6 +221,21 @@ export interface CanvasUserSelf {
   time_zone?: string;
 }
 
+// A course navigation tab — the items in Canvas's left-hand course nav
+// (Home, Modules, Grades, …) plus external tools, as returned by
+// GET /api/v1/courses/:id/tabs.
+export interface CourseTab {
+  id: string;
+  label: string;
+  html_url: string;
+  full_url?: string;
+  position?: number;
+  hidden?: boolean;
+  unused?: boolean;
+  visibility?: string;
+  type?: string;
+}
+
 export interface CourseWithScore {
   id: number;
   name: string;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import CourseNav from '../course-nav/CourseNav.svelte';
   import { fetchModulesFull } from './api';
   import { exportModules } from '../downloader/modules';
   import FilePreview from '../files/FilePreview.svelte';
@@ -89,6 +90,7 @@
 </script>
 
 <div class={`relative w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans ${previewFileId != null ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+  <CourseNav {courseId} />
   <div class="max-w-3xl mx-auto px-6 py-8">
     <header class="mb-6 flex items-center justify-between gap-3 flex-wrap">
       <div class="min-w-0">
