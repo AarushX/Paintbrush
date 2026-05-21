@@ -80,10 +80,22 @@
     matchesSection(u, sectionFilter)
   ));
 
-  const teachingTeam = $derived(filtered.filter(u => {
+  // Teachers first, then TAs, then designers (stable within each rank).
+  function teamRank(u: CanvasUser): number {
     const r = rolesOf(u);
-    return r.includes('teacher') || r.includes('ta');
-  }));
+    if (r.includes('teacher')) return 0;
+    if (r.includes('ta')) return 1;
+    return 2;
+  }
+  const teachingTeam = $derived(
+    filtered
+      .filter(u => {
+        const r = rolesOf(u);
+        return r.includes('teacher') || r.includes('ta');
+      })
+      .slice()
+      .sort((a, b) => teamRank(a) - teamRank(b))
+  );
 
   const others = $derived(filtered.filter(u => {
     const r = rolesOf(u);
