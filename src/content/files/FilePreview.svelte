@@ -121,9 +121,38 @@
   });
   const isPreviewableDoc = $derived(docExt);
 
+  // The background worker traces the canvadoc redirect chain to the file's
+  // underlying converted PDF. Rendering that PDF in Chrome's native viewer
+  // lets us request fit-to-width (`#view=FitH`) so a slide / page fills the
+  // frame by default — something the canvadoc DocViewer app won't do.
+  let pdfUrl = $state<string | null>(null);
+  let docResolved = $state(false);
+
+  // file_preview DocViewer fallback, used when PDF resolution fails.
   const docPreviewUrl = $derived(
     `/courses/${courseId}/files/${activeFileId}/file_preview?annotate=0`
   );
+  // FitH = fit page width; one slide / page is maximised in the frame.
+  const docIframeSrc = $derived(
+    pdfUrl ? `${pdfUrl}#view=FitH&toolbar=1` : docPreviewUrl
+  );
+
+  async function resolvePdf(fid: number) {
+    try {
+      const resp = await chrome.runtime.sendMessage({
+        type: 'PB_RESOLVE_DOC_PDF',
+        origin: location.origin,
+        courseId,
+        fileId: fid
+      });
+      if (activeFileId !== fid) return; // user switched files mid-resolve
+      pdfUrl = resp?.pdfUrl ?? null;
+    } catch {
+      if (activeFileId === fid) pdfUrl = null;
+    } finally {
+      if (activeFileId === fid) docResolved = true;
+    }
+  }
 
   // Reading filter → CSS filter string applied to the document surface.
   const filterCss = $derived(
@@ -173,6 +202,16 @@
           if (res.ok) textContent = await res.text();
           else isText = false;
         }
+        // For document files, resolve the underlying PDF so it can render
+        // fit-to-width in Chrome's native viewer.
+        const ext = file.display_name.toLowerCase().split('.').pop() ?? '';
+        if (['pdf','doc','docx','xls','xlsx','ppt','pptx','rtf','odt','ods','odp'].includes(ext)) {
+          pdfUrl = null;
+          docResolved = false;
+          resolvePdf(loadingFileId);
+        } else {
+          docResolved = true;
+        }
         // Folder info + sibling files for the metadata sidebar — non-fatal.
         if (file.folder_id != null) {
           const fid = file.folder_id;
@@ -197,6 +236,8 @@
     activeFileId = id;
     file = null;
     folder = null;
+    pdfUrl = null;
+    docResolved = false;
     load();
   }
 
@@ -399,14 +440,21 @@
           </div>
 
         {:else if isPreviewableDoc}
-          <!-- High-fidelity document viewer with reading filter applied -->
-          <div class="absolute inset-0 transition-[filter] duration-300" style={`filter: ${filterCss}; background: #ffffff;`}>
-            <iframe title={displayName}
-                    src={docPreviewUrl}
-                    class="w-full h-full border-none"
-                    style="color-scheme: light;">
-            </iframe>
-          </div>
+          {#if !docResolved}
+            <div class="absolute inset-0 flex items-center justify-center flex-col gap-3">
+              <div class="w-8 h-8 rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-[var(--pb-brand)] animate-spin"></div>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">Preparing fit-to-width preview…</p>
+            </div>
+          {:else}
+            <!-- Fit-to-width document viewer with reading filter applied -->
+            <div class="absolute inset-0 transition-[filter] duration-300" style={`filter: ${filterCss}; background: #ffffff;`}>
+              <iframe title={displayName}
+                      src={docIframeSrc}
+                      class="w-full h-full border-none"
+                      style="color-scheme: light;">
+              </iframe>
+            </div>
+          {/if}
 
         {:else}
           <div class="absolute inset-0 flex items-center justify-center p-6">
