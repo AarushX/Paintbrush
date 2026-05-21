@@ -16,14 +16,20 @@
   let loading = $state(true);
   let error = $state('');
 
-  // Drag-and-drop reordering. The new order is persisted to Canvas itself
-  // via the dashboard_positions API — the same endpoint the native
-  // dashboard uses — so it sticks across reloads and stays consistent
-  // with Canvas everywhere.
+  // Course reordering. Native HTML5 drag-and-drop on anchor cards proved
+  // unreliable, so this uses raw pointer events: the grid reorders live as
+  // you drag, and the final order is persisted to Canvas via the
+  // dashboard_positions API (the same endpoint the native dashboard uses)
+  // so it sticks across reloads and stays consistent with Canvas.
   let userId = $state<number | null>(null);
-  let dragIndex = $state<number | null>(null);
-  let dragOverIndex = $state<number | null>(null);
   let savingOrder = $state(false);
+
+  let cardEls: Record<number, HTMLElement> = {};
+  let draggingId = $state<number | null>(null);
+  let pointerStart: { id: number; x: number; y: number } | null = null;
+  // True between the moment a drag is detected and the resulting click —
+  // lets the card's click handler cancel the navigation that would follow.
+  let didDrag = false;
 
   async function persistOrder(next: DashboardCard[]) {
     if (userId == null) return;
@@ -37,6 +43,61 @@
     }
   }
 
+  function cardPointerDown(e: PointerEvent, id: number) {
+    if (e.button !== 0) return;
+    // Don't start a drag from the quick-link chips inside a card.
+    if ((e.target as HTMLElement).closest('button')) return;
+    pointerStart = { id, x: e.clientX, y: e.clientY };
+    didDrag = false;
+  }
+
+  // Which card (by current index) sits under the given viewport point.
+  function cardIndexAtPoint(x: number, y: number): number | null {
+    for (let i = 0; i < cards.length; i++) {
+      const el = cardEls[cards[i].id];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return i;
+    }
+    return null;
+  }
+
+  function onPointerMove(e: PointerEvent) {
+    if (!pointerStart) return;
+    if (draggingId == null) {
+      // Require a small movement before treating it as a drag (vs. a click).
+      if (Math.hypot(e.clientX - pointerStart.x, e.clientY - pointerStart.y) < 6) return;
+      draggingId = pointerStart.id;
+      didDrag = true;
+      document.body.style.userSelect = 'none';
+    }
+    const fromIdx = cards.findIndex(c => c.id === draggingId);
+    const targetIdx = cardIndexAtPoint(e.clientX, e.clientY);
+    if (fromIdx !== -1 && targetIdx != null && targetIdx !== fromIdx) {
+      const next = [...cards];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(targetIdx, 0, moved);
+      cards = next;
+    }
+  }
+
+  function onPointerUp() {
+    if (draggingId != null) persistOrder(cards);
+    draggingId = null;
+    pointerStart = null;
+    document.body.style.userSelect = '';
+  }
+
+  onMount(() => {
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      document.body.style.userSelect = '';
+    };
+  });
+
   onMount(async () => {
     try {
       const [s, c] = await Promise.all([
@@ -45,8 +106,8 @@
       ]);
       self = s;
       userId = s?.id ?? null;
-      // dashboard_cards already comes back in Canvas dashboard-position order.
-      cards = c;
+      // Order by Canvas dashboard position (falls back to API order).
+      cards = [...c].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
       const courseIds = c.map(card => card.id);
       const [p, a, csc] = await Promise.all([
         fetchPlanner().catch(() => []),
@@ -62,37 +123,6 @@
       loading = false;
     }
   });
-
-  function onDragStart(e: DragEvent, idx: number) {
-    dragIndex = idx;
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', String(idx));
-    }
-  }
-  function onDragOver(e: DragEvent, idx: number) {
-    e.preventDefault();
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-    dragOverIndex = idx;
-  }
-  function onDragLeave() {
-    dragOverIndex = null;
-  }
-  function onDrop(e: DragEvent, idx: number) {
-    e.preventDefault();
-    if (dragIndex == null || dragIndex === idx) { dragIndex = null; dragOverIndex = null; return; }
-    const next = [...cards];
-    const [moved] = next.splice(dragIndex, 1);
-    next.splice(idx, 0, moved);
-    cards = next;
-    persistOrder(next);
-    dragIndex = null;
-    dragOverIndex = null;
-  }
-  function onDragEnd() {
-    dragIndex = null;
-    dragOverIndex = null;
-  }
 
   function greeting(): string {
     const h = new Date().getHours();
@@ -325,24 +355,20 @@
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center text-sm text-zinc-400">No active courses.</div>
           {:else}
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {#each cards as card, idx (card.id)}
+              {#each cards as card (card.id)}
                 {@const score = scoreById.get(card.id)}
                 {@const cc = colorFor(card)}
-                {@const isDragging = dragIndex === idx}
-                {@const isDragOver = dragOverIndex === idx && dragIndex !== idx}
+                {@const isDragging = draggingId === card.id}
                 <a href={card.href}
-                   draggable="true"
-                   ondragstart={(e) => onDragStart(e, idx)}
-                   ondragover={(e) => onDragOver(e, idx)}
-                   ondragleave={onDragLeave}
-                   ondrop={(e) => onDrop(e, idx)}
-                   ondragend={onDragEnd}
-                   class={`group relative rounded-xl border bg-white dark:bg-zinc-900 overflow-hidden transition-all
-                     ${isDragging ? 'opacity-40 scale-95' : 'hover:shadow-md hover:-translate-y-0.5'}
-                     ${isDragOver
-                       ? 'border-[var(--pb-brand)] ring-2 ring-[var(--pb-brand)] ring-offset-2'
-                       : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'}`}
-                   style="cursor: grab;">
+                   draggable="false"
+                   bind:this={cardEls[card.id]}
+                   onpointerdown={(e) => cardPointerDown(e, card.id)}
+                   onclick={(e) => { if (didDrag) { e.preventDefault(); didDrag = false; } }}
+                   class={`group relative rounded-xl border bg-white dark:bg-zinc-900 overflow-hidden transition-[box-shadow,transform,border-color]
+                     ${isDragging
+                       ? 'opacity-90 scale-[1.03] shadow-xl border-[var(--pb-brand)] z-10'
+                       : 'hover:shadow-md hover:-translate-y-0.5 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'}`}
+                   style={`cursor: ${isDragging ? 'grabbing' : 'grab'}; touch-action: none;`}>
                   <div class="h-20 relative" style={`background-color: ${cc}; background-image: ${card.image ? `url('${card.image}')` : 'none'}; background-size: cover; background-position: center;`}>
                     <div class="absolute inset-0" style={`background: linear-gradient(135deg, ${cc}aa, transparent 70%);`}></div>
                     <div class="absolute top-2 left-2 p-1 rounded-md bg-white/80 dark:bg-black/40 backdrop-blur-sm text-zinc-600 dark:text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" title="Drag to reorder" aria-hidden="true">
