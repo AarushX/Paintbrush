@@ -147,16 +147,38 @@
     effectiveCanvadocUrl || `/courses/${courseId}/files/${activeFileId}/preview?doc_preview=1`
   );
 
-  // Fetch the file's Canvas page and scrape the canvadoc session URL.
+  // Fetch the file's Canvas page and extract the canvadoc / DocViewer
+  // session URL. Parses the HTML properly (DOMParser auto-decodes
+  // entities) and tries several shapes Canvas uses across file types
+  // — PowerPoint in particular often carries the URL on a nested
+  // element or an inline preview iframe rather than #doc_preview.
   async function resolveCanvadocUrl(cid: number, fid: number): Promise<string | null> {
     try {
       const html = await fetch(`/courses/${cid}/files/${fid}`, { credentials: 'include' }).then(r => r.text());
-      const m = html.match(/data-canvadoc_session_url=["']([^"']+)["']/);
-      if (!m) return null;
-      // The attribute value is HTML-entity-encoded (&amp; etc.) — decode it.
-      const ta = document.createElement('textarea');
-      ta.innerHTML = m[1];
-      return ta.value;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      // 1. Any element carrying the canvadoc session URL data attribute.
+      const dataEl = doc.querySelector<HTMLElement>('[data-canvadoc_session_url]');
+      const dataUrl = dataEl?.getAttribute('data-canvadoc_session_url');
+      if (dataUrl) return dataUrl;
+
+      // 2. An already-rendered DocViewer / canvadocs iframe.
+      const iframe = doc.querySelector<HTMLIFrameElement>(
+        'iframe[src*="canvadoc"], iframe[src*="docviewer"], iframe[src*="/sessions/"]'
+      );
+      const iframeSrc = iframe?.getAttribute('src');
+      if (iframeSrc) return iframeSrc;
+
+      // 3. Canvas embeds an ENV / preview JSON blob in a <script>. Look
+      //    for a canvadoc_session_url or attachment preview URL in it.
+      const scripts = Array.from(doc.querySelectorAll('script'));
+      for (const s of scripts) {
+        const txt = s.textContent ?? '';
+        const m = txt.match(/"canvadoc_session_url"\s*:\s*"([^"]+)"/)
+          ?? txt.match(/"(https?:\\?\/\\?\/[^"]*canvadoc[^"]*\/sessions\/[^"]+)"/);
+        if (m) return m[1].replace(/\\\//g, '/');
+      }
+      return null;
     } catch {
       return null;
     }
