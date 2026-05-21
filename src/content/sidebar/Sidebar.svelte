@@ -2,11 +2,82 @@
   import { sidebarState, loadInitial, refresh, groupedView } from './stores.svelte';
   import { onMount } from 'svelte';
   import TodoItem from './TodoItem.svelte';
+  import { parseCourseFromUrl } from '../../lib/course-context';
+  import { fetchAllPages } from '../../lib/canvas-api';
+  import type { FileFull } from '../../lib/types';
 
   let { open: openProp = true }: { open?: boolean } = $props();
   $effect.pre(() => { sidebarState.open = openProp; });
 
   let groups = $derived(groupedView());
+
+  // ---------------------------------------------------------------------------
+  // Sidebar view modes. "tasks" is the planner/to-do list (default); "files"
+  // shows the current course's files so they can be opened in the file viewer
+  // straight from the sidebar.
+  // ---------------------------------------------------------------------------
+  let view = $state<'tasks' | 'files'>('tasks');
+  let currentCourseId = $state<number | null>(parseCourseFromUrl(location.href));
+  let courseFiles = $state<FileFull[]>([]);
+  let filesLoading = $state(false);
+  let filesError = $state('');
+  let filesSearch = $state('');
+  let filesLoadedFor: number | null = null;
+
+  async function loadFiles(cid: number) {
+    filesLoading = true; filesError = '';
+    try {
+      courseFiles = await fetchAllPages<FileFull>(`/api/v1/courses/${cid}/files?per_page=100&sort=name`);
+      filesLoadedFor = cid;
+    } catch (err) {
+      filesError = err instanceof Error ? err.message : String(err);
+      filesLoadedFor = cid; // don't retry-loop on a hard failure
+    } finally {
+      filesLoading = false;
+    }
+  }
+
+  // Open a file in the FilePreview viewer. We push the file URL; index.ts's
+  // 500ms location poll then mounts the standalone FilePreview deck.
+  function openFileInViewer(fileId: number) {
+    if (currentCourseId == null) return;
+    history.pushState({}, '', `/courses/${currentCourseId}/files/${fileId}`);
+  }
+
+  const filteredFiles = $derived.by(() => {
+    const q = filesSearch.trim().toLowerCase();
+    if (!q) return courseFiles;
+    return courseFiles.filter(f => f.display_name.toLowerCase().includes(q));
+  });
+
+  function fmtSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  }
+
+  function fileIcon(name: string): string {
+    const ext = name.toLowerCase().split('.').pop() ?? '';
+    if (['jpg','jpeg','png','gif','webp','svg','heic'].includes(ext)) return '🖼';
+    if (['mp4','mov','avi','webm','mkv'].includes(ext)) return '🎬';
+    if (['mp3','wav','aac','flac','m4a'].includes(ext)) return '🎵';
+    if (['zip','tar','gz','rar','7z'].includes(ext)) return '📦';
+    if (['pdf'].includes(ext)) return '📕';
+    if (['doc','docx','rtf'].includes(ext)) return '📝';
+    if (['xls','xlsx','csv'].includes(ext)) return '📊';
+    if (['ppt','pptx'].includes(ext)) return '📈';
+    return '📄';
+  }
+
+  // Lazy-load the file list the first time the Files view is opened for a
+  // given course, and reload when the user navigates to a different course.
+  $effect(() => {
+    if (view === 'files' && currentCourseId != null
+        && filesLoadedFor !== currentCourseId && !filesLoading) {
+      loadFiles(currentCourseId);
+    }
+  });
 
   // Push Canvas's content inward to make room for the sidebar instead of
   // floating over it. Width changes are animated via the same easing the
@@ -60,9 +131,21 @@
     window.addEventListener('focus', onFocus);
     const onToggle = () => { sidebarState.open = !sidebarState.open; };
     document.addEventListener('paintbrush:toggle', onToggle);
+
+    // Track the course id across Canvas's SPA navigation so the Files
+    // tab appears / refreshes for the right course.
+    const coursePoll = window.setInterval(() => {
+      const cid = parseCourseFromUrl(location.href);
+      if (cid !== currentCourseId) {
+        currentCourseId = cid;
+        if (cid == null && view === 'files') view = 'tasks';
+      }
+    }, 800);
+
     return () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('paintbrush:toggle', onToggle);
+      window.clearInterval(coursePoll);
     };
   });
 
@@ -278,6 +361,25 @@
       </div>
     </header>
 
+    <!-- View tabs: To Do / Files (Files only inside a course) -->
+    {#if currentCourseId != null}
+      <div class="flex items-center gap-1 px-3 pt-2.5">
+        {#each [['tasks', 'To Do'], ['files', 'Files']] as const as [v, label]}
+          <button
+            onclick={() => (view = v)}
+            class={`flex-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-150 active:scale-95 ${view === v
+              ? 'shadow-sm'
+              : 'bg-zinc-100/70 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/70 dark:hover:bg-zinc-700/60'}`}
+            style={view === v
+              ? 'background: var(--pb-brand); color: var(--pb-brand-fg);'
+              : ''}>
+            {label}
+          </button>
+        {/each}
+      </div>
+    {/if}
+
+    {#if view === 'tasks'}
     <!-- Filter chips -->
     <div class="flex items-center gap-1 px-3 py-2.5 border-b border-zinc-200/50 dark:border-zinc-800/50 overflow-x-auto">
       {#each [
@@ -328,6 +430,55 @@
         <!-- Scroll fade mask -->
         <div class="pointer-events-none sticky bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white dark:from-zinc-900 to-transparent"></div>
       </div>
+    {/if}
+    {:else}
+      <!-- Files view: browse the current course's files and open them in the
+           FilePreview viewer straight from the sidebar. -->
+      <div class="px-3 py-2.5 border-b border-zinc-200/50 dark:border-zinc-800/50">
+        <div class="relative">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          <input
+            bind:value={filesSearch}
+            placeholder="Search files…"
+            class="w-full pl-8 pr-2.5 py-1.5 text-[11px] rounded-md bg-zinc-100/70 dark:bg-zinc-800/50 border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--pb-brand)] focus:bg-white dark:focus:bg-zinc-900 placeholder:text-zinc-400 transition-colors" />
+        </div>
+      </div>
+
+      {#if filesLoading}
+        <div class="py-16 text-center text-xs text-zinc-400">Loading files…</div>
+      {:else if filesError}
+        <div class="p-4 text-xs text-red-500 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20 m-3 rounded-lg border border-red-200/50 dark:border-red-900/30">
+          Error: {filesError}
+        </div>
+      {:else if filteredFiles.length === 0}
+        <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div class="text-3xl mb-3">📂</div>
+          <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">{filesSearch ? 'No matches' : 'No files'}</p>
+          <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
+            {filesSearch ? `Nothing matches "${filesSearch}".` : 'This course has no files.'}
+          </p>
+        </div>
+      {:else}
+        <div class="relative overflow-y-auto" style="height: calc(100vh - 142px - var(--pb-canvas-slot-h, 0px));">
+          {#each filteredFiles as f (f.id)}
+            <button
+              onclick={() => openFileInViewer(f.id)}
+              class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-zinc-100/70 dark:hover:bg-zinc-800/50 transition-colors border-b border-zinc-100/50 dark:border-zinc-800/30">
+              <span class="text-base flex-shrink-0 leading-none">{fileIcon(f.display_name)}</span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[12px] font-medium truncate">{f.display_name}</div>
+                <div class="text-[10px] text-zinc-400 dark:text-zinc-500">{fmtSize(f.size)}</div>
+              </div>
+              <svg class="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          {/each}
+          <div class="pointer-events-none sticky bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white dark:from-zinc-900 to-transparent"></div>
+        </div>
+      {/if}
     {/if}
   </aside>
 {:else}
