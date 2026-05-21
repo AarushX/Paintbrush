@@ -110,27 +110,57 @@
   );
 
   let domCanvadocSessionUrl = $state<string | null>(null);
+  // Canvadoc session URL resolved by fetching the file's Canvas page —
+  // needed when embedded (no #doc_preview element on the host page) or
+  // after switching to a sibling file.
+  let resolvedCanvadocUrl = $state<string | null>(null);
 
-  // The canvadoc session URL (DOM-scraped or prop) is bound to the FILE
-  // the host originally mounted with. Once the user switches to a
-  // sibling file it no longer applies — fall back to the generic
-  // /preview endpoint, which works for any file id.
+  // The DOM-scraped URL / prop only apply to the originally mounted file.
   const onInitialFile = $derived(activeFileId === fileId);
   const effectiveCanvadocUrl = $derived(
-    domCanvadocSessionUrl ?? (onInitialFile ? canvadocSessionUrl : null)
+    domCanvadocSessionUrl
+    ?? (onInitialFile ? canvadocSessionUrl : null)
+    ?? resolvedCanvadocUrl
   );
 
-  const isPreviewableDoc = $derived.by(() => {
-    if (effectiveCanvadocUrl) return true;
+  let resolvingCanvadoc = $state(false);
+
+  // Only treat a file as in-iframe-previewable when we have a real
+  // canvadoc session URL. Loading Canvas's generic /preview endpoint in
+  // an iframe for a non-PDF doc makes Canvas serve the raw file with
+  // Content-Disposition: attachment — which the browser then DOWNLOADS.
+  // PDFs are safe to render via /preview, so allow those too.
+  const isPdf = $derived(
+    !!file && (file.display_name.toLowerCase().endsWith('.pdf') || file.content_type === 'application/pdf')
+  );
+  const docExt = $derived.by(() => {
     if (!file) return false;
-    if (file.preview_url) return true;
     const ext = file.display_name.toLowerCase().split('.').pop() ?? '';
     return ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt', 'ods', 'odp'].includes(ext);
   });
+  const isPreviewableDoc = $derived(!!effectiveCanvadocUrl || isPdf);
+  // True while we're still fetching a canvadoc URL for a doc file —
+  // show a "preparing" state instead of the download fallback card.
+  const preparingPreview = $derived(docExt && !isPreviewableDoc && resolvingCanvadoc);
 
   const docPreviewUrl = $derived(
     effectiveCanvadocUrl || `/courses/${courseId}/files/${activeFileId}/preview?doc_preview=1`
   );
+
+  // Fetch the file's Canvas page and scrape the canvadoc session URL.
+  async function resolveCanvadocUrl(cid: number, fid: number): Promise<string | null> {
+    try {
+      const html = await fetch(`/courses/${cid}/files/${fid}`, { credentials: 'include' }).then(r => r.text());
+      const m = html.match(/data-canvadoc_session_url=["']([^"']+)["']/);
+      if (!m) return null;
+      // The attribute value is HTML-entity-encoded (&amp; etc.) — decode it.
+      const ta = document.createElement('textarea');
+      ta.innerHTML = m[1];
+      return ta.value;
+    } catch {
+      return null;
+    }
+  }
 
   // Reading filter → CSS filter string applied to the document surface.
   const filterCss = $derived(
@@ -169,8 +199,9 @@
   async function load() {
     loading = true; error = '';
     textContent = ''; isText = false;
+    const loadingFileId = activeFileId;
     try {
-      file = await fetchFileDetail(activeFileId);
+      file = await fetchFileDetail(loadingFileId);
       if (file) {
         const type = getFileType(file.display_name);
         if (type === 'text') {
@@ -178,6 +209,17 @@
           const res = await fetch(file.url, { credentials: 'include' });
           if (res.ok) textContent = await res.text();
           else isText = false;
+        }
+        // Resolve a real canvadoc session URL for doc files (non-PDF,
+        // non-media). Without it the iframe would download the file.
+        if (type === 'other' || type === 'pdf') {
+          resolvingCanvadoc = true;
+          resolveCanvadocUrl(courseId, loadingFileId).then(url => {
+            // Guard against a stale resolution after the user switched files.
+            if (activeFileId !== loadingFileId) return;
+            if (url) resolvedCanvadocUrl = url;
+            resolvingCanvadoc = false;
+          });
         }
         // Folder info + sibling files for the metadata sidebar — non-fatal.
         if (file.folder_id != null) {
@@ -204,6 +246,8 @@
     file = null;
     folder = null;
     domCanvadocSessionUrl = null;
+    resolvedCanvadocUrl = null;
+    resolvingCanvadoc = false;
     load();
   }
 
@@ -431,6 +475,12 @@
                     class="w-full h-full border-none"
                     style="color-scheme: light;">
             </iframe>
+          </div>
+
+        {:else if preparingPreview}
+          <div class="absolute inset-0 flex items-center justify-center flex-col gap-3">
+            <div class="w-8 h-8 rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-[var(--pb-brand)] animate-spin"></div>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">Preparing document preview…</p>
           </div>
 
         {:else}
