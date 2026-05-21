@@ -1,14 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fetchFileDetail, fetchFolder } from './api';
+  import { fetchFileDetail, fetchFolder, fetchFolderFiles } from './api';
   import { downloadFileFromUrl } from '../downloader/zip';
   import type { FileFull, FolderFull } from '../../lib/types';
 
   let { courseId, fileId, canvadocSessionUrl = null, onShowCanvas }: { courseId: number; fileId: number; canvadocSessionUrl?: string | null; onShowCanvas?: () => void } = $props();
 
+  // The viewer can switch between files in the same folder without
+  // remounting. `activeFileId` is what's actually displayed; `fileId`
+  // is just the initial value the host mounted with.
+  let activeFileId = $state(fileId);
+
   // ---- Core file state ----
   let file = $state<FileFull | null>(null);
   let folder = $state<FolderFull | null>(null);
+  let siblingFiles = $state<FileFull[]>([]);
   let loading = $state(true);
   let error = $state('');
   let textContent = $state('');
@@ -83,8 +89,17 @@
 
   let domCanvadocSessionUrl = $state<string | null>(null);
 
+  // The canvadoc session URL (DOM-scraped or prop) is bound to the FILE
+  // the host originally mounted with. Once the user switches to a
+  // sibling file it no longer applies — fall back to the generic
+  // /preview endpoint, which works for any file id.
+  const onInitialFile = $derived(activeFileId === fileId);
+  const effectiveCanvadocUrl = $derived(
+    domCanvadocSessionUrl ?? (onInitialFile ? canvadocSessionUrl : null)
+  );
+
   const isPreviewableDoc = $derived.by(() => {
-    if (domCanvadocSessionUrl || canvadocSessionUrl) return true;
+    if (effectiveCanvadocUrl) return true;
     if (!file) return false;
     if (file.preview_url) return true;
     const ext = file.display_name.toLowerCase().split('.').pop() ?? '';
@@ -92,7 +107,7 @@
   });
 
   const docPreviewUrl = $derived(
-    domCanvadocSessionUrl || canvadocSessionUrl || `/courses/${courseId}/files/${fileId}/preview?doc_preview=1`
+    effectiveCanvadocUrl || `/courses/${courseId}/files/${activeFileId}/preview?doc_preview=1`
   );
 
   // Reading filter → CSS filter string applied to the document surface.
@@ -131,8 +146,9 @@
 
   async function load() {
     loading = true; error = '';
+    textContent = ''; isText = false;
     try {
-      file = await fetchFileDetail(fileId);
+      file = await fetchFileDetail(activeFileId);
       if (file) {
         const type = getFileType(file.display_name);
         if (type === 'text') {
@@ -141,9 +157,13 @@
           if (res.ok) textContent = await res.text();
           else isText = false;
         }
-        // Folder info for the metadata sidebar — non-fatal.
+        // Folder info + sibling files for the metadata sidebar — non-fatal.
         if (file.folder_id != null) {
-          fetchFolder(file.folder_id).then(f => { folder = f; }).catch(() => {});
+          const fid = file.folder_id;
+          fetchFolder(fid).then(f => { folder = f; }).catch(() => {});
+          fetchFolderFiles(fid)
+            .then(list => { siblingFiles = list.filter(f => !f.hidden); })
+            .catch(() => {});
         }
       }
     } catch (err) {
@@ -153,10 +173,25 @@
     }
   }
 
+  // Switch the viewer to a different file in the same folder. Stays
+  // inside the component — no remount, no URL change (which would
+  // trip index.ts's file-preview sync into a hard remount).
+  function switchFile(id: number) {
+    if (id === activeFileId) return;
+    activeFileId = id;
+    file = null;
+    folder = null;
+    domCanvadocSessionUrl = null;
+    load();
+  }
+
   onMount(() => {
     load();
 
     const checkDom = () => {
+      // The DOM-scraped canvadoc URL only applies to the originally
+      // loaded file. Once the user has switched to a sibling, skip it.
+      if (activeFileId !== fileId) return;
       const el = document.getElementById('doc_preview');
       const attachmentId = el?.getAttribute('data-attachment_id');
       if (attachmentId && Number(attachmentId) === fileId) {
@@ -444,11 +479,50 @@
             </div>
           </div>
 
+          <!-- Files in this folder — click to open without leaving the deck -->
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-1">
+              <div class="text-[9px] uppercase tracking-wider text-zinc-400">In this folder</div>
+              {#if siblingFiles.length > 0}
+                <span class="text-[9px] text-zinc-400">{siblingFiles.length}</span>
+              {/if}
+            </div>
+            {#if siblingFiles.length === 0}
+              <div class="rounded-lg border border-zinc-200 dark:border-zinc-800 p-2.5 text-[11px] text-zinc-400">
+                {folder ? 'No other files.' : 'Loading…'}
+              </div>
+            {:else}
+              <div class="rounded-lg border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800/60 overflow-hidden max-h-72 overflow-y-auto">
+                {#each siblingFiles as sf (sf.id)}
+                  {@const isCurrent = sf.id === activeFileId}
+                  <button onclick={() => switchFile(sf.id)}
+                          class={`w-full flex items-center gap-2 px-2.5 py-2 text-left transition-colors ${isCurrent
+                            ? ''
+                            : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                          style={isCurrent ? 'background: var(--pb-brand-soft);' : ''}
+                          title={sf.display_name}>
+                    <span class="text-sm flex-shrink-0">{fileIcon(sf.display_name)}</span>
+                    <div class="min-w-0 flex-1">
+                      <div class={`text-[11px] truncate ${isCurrent ? 'font-semibold' : 'font-medium'}`}
+                           style={isCurrent ? 'color: var(--pb-brand-strong);' : ''}>
+                        {sf.display_name}
+                      </div>
+                      <div class="text-[10px] text-zinc-400">{fmtSize(sf.size)}</div>
+                    </div>
+                    {#if isCurrent}
+                      <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: var(--pb-brand);"></span>
+                    {/if}
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+
           <!-- Technical IDs (click to copy) -->
           <div>
             <div class="text-[9px] uppercase tracking-wider text-zinc-400 mb-1">Technical IDs</div>
             <div class="space-y-1">
-              {#each [['Course', courseId], ['File', fileId], ['Folder', file.folder_id ?? '—']] as const as [label, value]}
+              {#each [['Course', courseId], ['File', activeFileId], ['Folder', file.folder_id ?? '—']] as const as [label, value]}
                 <button onclick={() => copyId(label, value)}
                         class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-[var(--pb-brand)] transition-colors text-left">
                   <span class="text-[10px] uppercase tracking-wider text-zinc-400">{label}</span>
@@ -462,17 +536,32 @@
     {/if}
   </div>
 
-  <!-- ============ Focus-mode exit bubble ============ -->
+  <!-- ============ Focus-mode floating controls ============ -->
   {#if focusMode}
-    <button onclick={() => focusMode = false}
-            class="fixed bottom-5 right-5 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl text-xs font-semibold active:scale-95 transition-all animate-fade-in"
-            style="background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: 0 8px 28px color-mix(in srgb, var(--pb-brand) 45%, transparent);"
-            title="Exit focus mode (Esc)">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4m0 5H4m5 0L4 4m11 5h5m-5 0V4m0 5l5-5M9 15v5m0-5H4m5 0l-5 5m11-5h5m-5 0v5m0-5l5 5" />
-      </svg>
-      Exit Focus
-    </button>
+    <div class="fixed bottom-5 right-5 z-30 flex items-center gap-2 animate-fade-in">
+      <!-- Info toggle — keeps the file list / details reachable while the
+           header (and its Info button) is hidden in focus mode. -->
+      <button onclick={() => showSidebar = !showSidebar}
+              class="w-10 h-10 flex items-center justify-center rounded-full shadow-2xl active:scale-95 transition-all"
+              style={showSidebar
+                ? 'background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: 0 8px 28px color-mix(in srgb, var(--pb-brand) 45%, transparent);'
+                : 'background: rgba(255,255,255,0.95); color: rgb(63 63 70); box-shadow: 0 8px 24px rgba(0,0,0,0.18); border: 1px solid rgba(0,0,0,0.06);'}
+              title={showSidebar ? 'Hide details' : 'Show file list & details'}>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+      <!-- Exit focus -->
+      <button onclick={() => focusMode = false}
+              class="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl text-xs font-semibold active:scale-95 transition-all"
+              style="background: var(--pb-brand); color: var(--pb-brand-fg); box-shadow: 0 8px 28px color-mix(in srgb, var(--pb-brand) 45%, transparent);"
+              title="Exit focus mode (Esc)">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4m0 5H4m5 0L4 4m11 5h5m-5 0V4m0 5l5-5M9 15v5m0-5H4m5 0l-5 5m11-5h5m-5 0v5m0-5l5 5" />
+        </svg>
+        Exit Focus
+      </button>
+    </div>
   {/if}
 </div>
 
