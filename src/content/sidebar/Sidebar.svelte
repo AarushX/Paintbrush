@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import TodoItem from './TodoItem.svelte';
   import CourseSelect from './CourseSelect.svelte';
-  import SectionMenu from '../course-nav/SectionMenu.svelte';
+  import SectionNav from '../course-nav/SectionNav.svelte';
   import { parseCourseFromUrl } from '../../lib/course-context';
   import { fetchAllPages, CanvasApiError } from '../../lib/canvas-api';
   import { fetchDashboardCards } from '../dashboard/api';
@@ -407,17 +407,22 @@
       </div>
     </header>
 
-    <!-- Course page navigator — jump to any page of the course you're in -->
-    {#if currentCourseId != null}
-      <div class="px-3 pt-2.5">
-        {#key currentCourseId}
-          <SectionMenu courseId={currentCourseId} />
-        {/key}
-      </div>
-    {/if}
-
-    <!-- View tabs: To Do / Files -->
+    <!-- Course nav: course picker dropdown + native page chips + a
+         separate dropdown for external tools / links -->
     {#if courses.length > 0}
+      <div class="px-3 pt-3 pb-3 border-b border-zinc-200/50 dark:border-zinc-800/50 space-y-2">
+        <CourseSelect
+          courses={courseOptions}
+          selectedId={selectedCourseId}
+          onSelect={(id) => (selectedCourseId = id)} />
+        {#if selectedCourseId != null}
+          {#key selectedCourseId}
+            <SectionNav courseId={selectedCourseId} live={selectedCourseId === currentCourseId} />
+          {/key}
+        {/if}
+      </div>
+
+      <!-- View tabs: To Do / Files -->
       <div class="flex items-center gap-1 px-3 pt-2.5">
         {#each [['tasks', 'To Do'], ['files', 'Files']] as const as [v, label]}
           <button
@@ -487,13 +492,9 @@
       </div>
     {/if}
     {:else}
-      <!-- Files view: pick any course and open its files in the FilePreview
+      <!-- Files view: open the selected course's files in the FilePreview
            viewer straight from the sidebar. -->
-      <div class="px-3 py-2.5 border-b border-zinc-200/50 dark:border-zinc-800/50 space-y-2">
-        <CourseSelect
-          courses={courseOptions}
-          selectedId={selectedCourseId}
-          onSelect={(id) => (selectedCourseId = id)} />
+      <div class="px-3 py-2.5 border-b border-zinc-200/50 dark:border-zinc-800/50">
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
