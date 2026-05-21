@@ -132,6 +132,15 @@
     const onToggle = () => { sidebarState.open = !sidebarState.open; };
     document.addEventListener('paintbrush:toggle', onToggle);
 
+    // External request to surface the Files panel (fired by the Files page's
+    // "Open files panel" promo). Opens the sidebar and switches to Files.
+    const onOpenFiles = () => {
+      sidebarState.open = true;
+      const cid = parseCourseFromUrl(location.href);
+      if (cid != null) { currentCourseId = cid; view = 'files'; }
+    };
+    document.addEventListener('paintbrush:open-files', onOpenFiles);
+
     // Track the course id across Canvas's SPA navigation so the Files
     // tab appears / refreshes for the right course.
     const coursePoll = window.setInterval(() => {
@@ -145,6 +154,7 @@
     return () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('paintbrush:toggle', onToggle);
+      document.removeEventListener('paintbrush:open-files', onOpenFiles);
       window.clearInterval(coursePoll);
     };
   });
