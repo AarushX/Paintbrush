@@ -99,11 +99,16 @@ export function readCsrfToken(cookieString: string): string | null {
   return null;
 }
 
-export async function canvasPost<T>(url: string, body: unknown, options: FetchOptions = {}): Promise<T> {
+async function canvasWrite<T>(
+  method: 'POST' | 'PUT' | 'DELETE',
+  url: string,
+  body: unknown,
+  options: FetchOptions = {}
+): Promise<T> {
   const f = options.fetch ?? globalThis.fetch.bind(globalThis);
   const csrf = typeof document !== 'undefined' ? readCsrfToken(document.cookie) : null;
   const res = await f(url, {
-    method: 'POST',
+    method,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -115,4 +120,12 @@ export async function canvasPost<T>(url: string, body: unknown, options: FetchOp
   });
   if (!res.ok) throw new CanvasApiError(`${res.status} ${res.statusText} on ${url}`, res.status);
   return (await res.json()) as T;
+}
+
+export function canvasPost<T>(url: string, body: unknown, options: FetchOptions = {}): Promise<T> {
+  return canvasWrite<T>('POST', url, body, options);
+}
+
+export function canvasPut<T>(url: string, body: unknown, options: FetchOptions = {}): Promise<T> {
+  return canvasWrite<T>('PUT', url, body, options);
 }

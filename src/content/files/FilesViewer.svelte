@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fetchCourseFolders, fetchFolderFiles, fetchFolderSubfolders, fetchRootFolder } from './api';
+  import { CanvasApiError } from '../../lib/canvas-api';
   import { downloadAllFiles } from '../downloader/files';
   import { downloadFileFromUrl } from '../downloader/zip';
   import FilePreview from './FilePreview.svelte';
@@ -19,6 +20,7 @@
   let subfolders = $state<FolderFull[]>([]);
   let loading = $state(true);
   let error = $state('');
+  let filesDisabled = $state(false);
   let search = $state('');
   let sortBy = $state<'name' | 'newest' | 'largest'>('name');
   let showHidden = $state(false);
@@ -52,7 +54,14 @@
       rootFolderId = root.id;
       if (currentFolderId == null) currentFolderId = resolveFolderId(initialFolderPath) ?? root.id;
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      const status = err instanceof CanvasApiError ? err.status : 0;
+      if (status === 403 || status === 401 || status === 404) {
+        // Files section is turned off / restricted for this course.
+        filesDisabled = true;
+      } else {
+        error = err instanceof Error ? err.message : String(err);
+      }
+      loading = false; // nothing more to load — clear the spinner
     }
   }
 
@@ -289,6 +298,14 @@
 
     {#if loading && files.length === 0 && subfolders.length === 0}
       <div class="py-16 text-center text-sm text-zinc-400">Loading…</div>
+    {:else if filesDisabled}
+      <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-14 text-center">
+        <div class="text-4xl mb-3">🔒</div>
+        <h2 class="text-base font-semibold mb-1">Files unavailable</h2>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+          This course has the Files section turned off, or you don't have access to it.
+        </p>
+      </div>
     {:else if error}
       <div class="rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-950/20 p-4 text-sm text-red-700 dark:text-red-300">{error}</div>
     {:else if filteredFolders.length === 0 && filteredFiles.length === 0}

@@ -2,9 +2,11 @@
   import { sidebarState, loadInitial, refresh, groupedView } from './stores.svelte';
   import { onMount } from 'svelte';
   import TodoItem from './TodoItem.svelte';
+  import CourseSelect from './CourseSelect.svelte';
   import { parseCourseFromUrl } from '../../lib/course-context';
-  import { fetchAllPages } from '../../lib/canvas-api';
-  import type { FileFull } from '../../lib/types';
+  import { fetchAllPages, CanvasApiError } from '../../lib/canvas-api';
+  import { fetchDashboardCards } from '../dashboard/api';
+  import type { FileFull, DashboardCard } from '../../lib/types';
 
   let { open: openProp = true }: { open?: boolean } = $props();
   $effect.pre(() => { sidebarState.open = openProp; });
@@ -18,20 +20,41 @@
   // ---------------------------------------------------------------------------
   let view = $state<'tasks' | 'files'>('tasks');
   let currentCourseId = $state<number | null>(parseCourseFromUrl(location.href));
+  // The course whose files the Files panel is showing. Defaults to the
+  // course you're viewing, but the course selector lets you pick any.
+  let selectedCourseId = $state<number | null>(parseCourseFromUrl(location.href));
+  let courses = $state<DashboardCard[]>([]);
   let courseFiles = $state<FileFull[]>([]);
   let filesLoading = $state(false);
   let filesError = $state('');
+  let filesDisabled = $state(false);
   let filesSearch = $state('');
   let filesLoadedFor: number | null = null;
 
+  // Course options for the picker. Canvas's longName repeats the code, so
+  // prefer the cleaner short/original name.
+  const courseOptions = $derived(courses.map(c => ({
+    id: c.id,
+    name: c.shortName || c.originalName || c.longName || `Course ${c.id}`,
+    code: c.courseCode,
+    color: c.color
+  })));
+
   async function loadFiles(cid: number) {
-    filesLoading = true; filesError = '';
+    filesLoading = true; filesError = ''; filesDisabled = false;
     try {
       courseFiles = await fetchAllPages<FileFull>(`/api/v1/courses/${cid}/files?per_page=100&sort=name`);
       filesLoadedFor = cid;
     } catch (err) {
-      filesError = err instanceof Error ? err.message : String(err);
       filesLoadedFor = cid; // don't retry-loop on a hard failure
+      courseFiles = [];
+      const status = err instanceof CanvasApiError ? err.status : 0;
+      if (status === 403 || status === 401 || status === 404) {
+        // The Files tab is hidden / restricted for this course — not an error.
+        filesDisabled = true;
+      } else {
+        filesError = err instanceof Error ? err.message : String(err);
+      }
     } finally {
       filesLoading = false;
     }
@@ -40,8 +63,8 @@
   // Open a file in the FilePreview viewer. We push the file URL; index.ts's
   // 500ms location poll then mounts the standalone FilePreview deck.
   function openFileInViewer(fileId: number) {
-    if (currentCourseId == null) return;
-    history.pushState({}, '', `/courses/${currentCourseId}/files/${fileId}`);
+    if (selectedCourseId == null) return;
+    history.pushState({}, '', `/courses/${selectedCourseId}/files/${fileId}`);
   }
 
   const filteredFiles = $derived.by(() => {
@@ -71,11 +94,11 @@
   }
 
   // Lazy-load the file list the first time the Files view is opened for a
-  // given course, and reload when the user navigates to a different course.
+  // given course, and reload when a different course is selected.
   $effect(() => {
-    if (view === 'files' && currentCourseId != null
-        && filesLoadedFor !== currentCourseId && !filesLoading) {
-      loadFiles(currentCourseId);
+    if (view === 'files' && selectedCourseId != null
+        && filesLoadedFor !== selectedCourseId && !filesLoading) {
+      loadFiles(selectedCourseId);
     }
   });
 
@@ -125,6 +148,16 @@
 
   onMount(() => {
     loadInitial();
+
+    // Load the user's course list for the Files-panel course picker.
+    fetchDashboardCards()
+      .then(list => {
+        courses = list;
+        // Default the picker to the current course, else the first course.
+        if (selectedCourseId == null && list.length > 0) selectedCourseId = list[0].id;
+      })
+      .catch(() => {});
+
     const onFocus = () => {
       if (Date.now() - sidebarState.lastSyncedAt > 2 * 60_000) refresh();
     };
@@ -137,17 +170,19 @@
     const onOpenFiles = () => {
       sidebarState.open = true;
       const cid = parseCourseFromUrl(location.href);
-      if (cid != null) { currentCourseId = cid; view = 'files'; }
+      if (cid != null) selectedCourseId = cid;
+      view = 'files';
     };
     document.addEventListener('paintbrush:open-files', onOpenFiles);
 
-    // Track the course id across Canvas's SPA navigation so the Files
-    // tab appears / refreshes for the right course.
+    // Track the course id across Canvas's SPA navigation. When you move to
+    // a different course, the Files panel follows you (until you pick
+    // another course manually from the selector).
     const coursePoll = window.setInterval(() => {
       const cid = parseCourseFromUrl(location.href);
       if (cid !== currentCourseId) {
         currentCourseId = cid;
-        if (cid == null && view === 'files') view = 'tasks';
+        if (cid != null) selectedCourseId = cid;
       }
     }, 800);
 
@@ -371,8 +406,8 @@
       </div>
     </header>
 
-    <!-- View tabs: To Do / Files (Files only inside a course) -->
-    {#if currentCourseId != null}
+    <!-- View tabs: To Do / Files -->
+    {#if courses.length > 0}
       <div class="flex items-center gap-1 px-3 pt-2.5">
         {#each [['tasks', 'To Do'], ['files', 'Files']] as const as [v, label]}
           <button
@@ -442,9 +477,13 @@
       </div>
     {/if}
     {:else}
-      <!-- Files view: browse the current course's files and open them in the
-           FilePreview viewer straight from the sidebar. -->
-      <div class="px-3 py-2.5 border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <!-- Files view: pick any course and open its files in the FilePreview
+           viewer straight from the sidebar. -->
+      <div class="px-3 py-2.5 border-b border-zinc-200/50 dark:border-zinc-800/50 space-y-2">
+        <CourseSelect
+          courses={courseOptions}
+          selectedId={selectedCourseId}
+          onSelect={(id) => (selectedCourseId = id)} />
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
@@ -458,6 +497,14 @@
 
       {#if filesLoading}
         <div class="py-16 text-center text-xs text-zinc-400">Loading files…</div>
+      {:else if filesDisabled}
+        <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div class="text-3xl mb-3">🔒</div>
+          <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">Files unavailable</p>
+          <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
+            This course has the Files section turned off, or you don't have access to it.
+          </p>
+        </div>
       {:else if filesError}
         <div class="p-4 text-xs text-red-500 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20 m-3 rounded-lg border border-red-200/50 dark:border-red-900/30">
           Error: {filesError}

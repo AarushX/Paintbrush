@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import {
-    fetchDashboardCards, fetchSelf, fetchPlanner, fetchRecentAnnouncements, fetchCoursesWithScores
+    fetchDashboardCards, fetchSelf, fetchPlanner, fetchRecentAnnouncements,
+    fetchCoursesWithScores, saveDashboardPositions
   } from './api';
   import type {
     DashboardCard, CanvasUserSelf, PlannerItem, Announcement, CourseWithScore
@@ -15,41 +16,37 @@
   let loading = $state(true);
   let error = $state('');
 
-  // Drag-and-drop reordering. Persists a user-chosen order to
-  // chrome.storage.local so cards keep that arrangement next session.
-  const ORDER_KEY = 'paintbrushDashboardOrder';
+  // Drag-and-drop reordering. The new order is persisted to Canvas itself
+  // via the dashboard_positions API — the same endpoint the native
+  // dashboard uses — so it sticks across reloads and stays consistent
+  // with Canvas everywhere.
+  let userId = $state<number | null>(null);
   let dragIndex = $state<number | null>(null);
   let dragOverIndex = $state<number | null>(null);
+  let savingOrder = $state(false);
 
-  async function loadOrder(): Promise<number[] | null> {
+  async function persistOrder(next: DashboardCard[]) {
+    if (userId == null) return;
+    savingOrder = true;
     try {
-      const r = await chrome.storage.local.get(ORDER_KEY);
-      return Array.isArray(r?.[ORDER_KEY]) ? (r[ORDER_KEY] as number[]) : null;
-    } catch { return null; }
-  }
-  async function saveOrder(order: number[]) {
-    try { await chrome.storage.local.set({ [ORDER_KEY]: order }); } catch {}
-  }
-  function applyOrder(list: DashboardCard[], order: number[]): DashboardCard[] {
-    const byId = new Map(list.map(c => [c.id, c]));
-    const out: DashboardCard[] = [];
-    for (const id of order) {
-      const c = byId.get(id);
-      if (c) { out.push(c); byId.delete(id); }
+      await saveDashboardPositions(userId, next.map(c => c.id));
+    } catch (err) {
+      console.error('[Paintbrush] failed to save course order', err);
+    } finally {
+      savingOrder = false;
     }
-    for (const c of byId.values()) out.push(c); // append any new courses
-    return out;
   }
 
   onMount(async () => {
     try {
-      const [s, c, savedOrder] = await Promise.all([
+      const [s, c] = await Promise.all([
         fetchSelf().catch(() => null),
-        fetchDashboardCards(),
-        loadOrder()
+        fetchDashboardCards()
       ]);
       self = s;
-      cards = savedOrder ? applyOrder(c, savedOrder) : c;
+      userId = s?.id ?? null;
+      // dashboard_cards already comes back in Canvas dashboard-position order.
+      cards = c;
       const courseIds = c.map(card => card.id);
       const [p, a, csc] = await Promise.all([
         fetchPlanner().catch(() => []),
@@ -88,7 +85,7 @@
     const [moved] = next.splice(dragIndex, 1);
     next.splice(idx, 0, moved);
     cards = next;
-    saveOrder(next.map(c => c.id));
+    persistOrder(next);
     dragIndex = null;
     dragOverIndex = null;
   }
@@ -314,7 +311,15 @@
         <section class="lg:col-span-2">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-[10px] uppercase tracking-[0.08em] font-semibold text-zinc-500">Your courses</h2>
-            <span class="text-[11px] text-zinc-400">{cards.length}</span>
+            <div class="flex items-center gap-2">
+              {#if savingOrder}
+                <span class="text-[10px] text-zinc-400 flex items-center gap-1">
+                  <span class="w-2.5 h-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 border-t-[var(--pb-brand)] animate-spin"></span>
+                  Saving order…
+                </span>
+              {/if}
+              <span class="text-[11px] text-zinc-400">{cards.length}</span>
+            </div>
           </div>
           {#if cards.length === 0}
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center text-sm text-zinc-400">No active courses.</div>
