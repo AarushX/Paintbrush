@@ -4,7 +4,29 @@
   import { downloadFileFromUrl } from '../downloader/zip';
   import type { FileFull, FolderFull } from '../../lib/types';
 
-  let { courseId, fileId, canvadocSessionUrl = null, onShowCanvas }: { courseId: number; fileId: number; canvadocSessionUrl?: string | null; onShowCanvas?: () => void } = $props();
+  let {
+    courseId,
+    fileId,
+    canvadocSessionUrl = null,
+    onShowCanvas,
+    embedded = false,
+    hostId = 'paintbrush-file-preview-root',
+    backLabel = 'Files',
+    onClose
+  }: {
+    courseId: number;
+    fileId: number;
+    canvadocSessionUrl?: string | null;
+    onShowCanvas?: () => void;
+    /** When true, FilePreview is rendered inside another viewer (Files /
+     *  Modules) rather than as its own page mount. Back navigation calls
+     *  onClose instead of history.back(). */
+    embedded?: boolean;
+    /** id of the shadow-DOM host that focus mode should expand. */
+    hostId?: string;
+    backLabel?: string;
+    onClose?: () => void;
+  } = $props();
 
   // The viewer can switch between files in the same folder without
   // remounting. `activeFileId` is what's actually displayed; `fileId`
@@ -122,7 +144,7 @@
   let savedHostRight: string | null = null;
 
   function getHost(): HTMLElement | null {
-    return document.getElementById('paintbrush-file-preview-root');
+    return document.getElementById(hostId);
   }
 
   $effect(() => {
@@ -223,6 +245,7 @@
   });
 
   function goBack() {
+    if (embedded && onClose) { onClose(); return; }
     if (window.history.length > 1) window.history.back();
     else window.location.href = `/courses/${courseId}/files`;
   }
@@ -246,18 +269,19 @@
   ];
 </script>
 
-<div class="h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans flex flex-col overflow-hidden">
+<div class={`${embedded ? 'absolute inset-0' : 'h-screen w-full'} bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans flex flex-col overflow-hidden`}>
   <!-- ============ Frosted-glass toolbar ============ -->
   {#if !focusMode}
     <header class="h-16 border-b border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md flex items-center justify-between px-5 z-20 flex-shrink-0">
       <!-- Left: back + title -->
       <div class="flex items-center gap-3 min-w-0">
         <button onclick={goBack}
-                class="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors active:scale-90"
-                aria-label="Back to Files">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                class="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors active:scale-95 flex items-center gap-1.5 text-xs font-medium"
+                aria-label={`Back to ${backLabel}`}>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
+          {backLabel}
         </button>
         <div class="min-w-0">
           <div class="flex items-center gap-2">

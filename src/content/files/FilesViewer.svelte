@@ -3,8 +3,11 @@
   import { fetchCourseFolders, fetchFolderFiles, fetchFolderSubfolders, fetchRootFolder } from './api';
   import { downloadAllFiles } from '../downloader/files';
   import { downloadFileFromUrl } from '../downloader/zip';
+  import FilePreview from './FilePreview.svelte';
 
   let downloadingId = $state<number | null>(null);
+  // When set, the FilePreview deck opens inline over the file list.
+  let previewFileId = $state<number | null>(null);
 
   async function handleFileDownload(f: FileFull) {
     if (downloadingId === f.id) return;
@@ -168,7 +171,7 @@
   });
 </script>
 
-<div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
+<div class={`relative w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans ${previewFileId != null ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
   <div class="max-w-5xl mx-auto px-6 py-6">
 
     <!-- Header -->
@@ -245,10 +248,16 @@
         {#each filteredFiles as f (f.id)}
           <div class={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors ${f.locked_for_user ? 'opacity-50' : ''}`}>
             <span class="text-base flex-shrink-0">{fileIcon(f)}</span>
-            <a href={`/courses/${courseId}/files/${f.id}`} class="min-w-0 flex-1 group" style="color: inherit; text-decoration: none;">
+            <button type="button" onclick={() => previewFileId = f.id}
+                    class="min-w-0 flex-1 group text-left" style="color: inherit;">
               <div class="text-sm font-medium truncate group-hover:underline" style="text-underline-offset: 3px;">{f.display_name}</div>
               <div class="text-[11px] text-zinc-500 truncate">{fmtSize(f.size)}{f.updated_at ? ` · ${fmtDate(f.updated_at)}` : ''}</div>
-            </a>
+            </button>
+            <button type="button" onclick={() => previewFileId = f.id}
+                    class="px-2 py-1 text-[11px] font-medium rounded text-zinc-500 hover:text-[var(--pb-brand-strong)] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    title="Open in viewer">
+              View
+            </button>
             <button type="button"
                     onclick={(e) => { e.preventDefault(); e.stopPropagation(); handleFileDownload(f); }}
                     disabled={downloadingId === f.id}
@@ -261,4 +270,17 @@
       </div>
     {/if}
   </div>
+
+  <!-- Inline file preview deck — opens over the list, no navigation -->
+  {#if previewFileId != null}
+    {#key previewFileId}
+      <FilePreview
+        {courseId}
+        fileId={previewFileId}
+        embedded
+        hostId="paintbrush-files-root"
+        backLabel="Files"
+        onClose={() => previewFileId = null} />
+    {/key}
+  {/if}
 </div>

@@ -2,7 +2,11 @@
   import { onMount } from 'svelte';
   import { fetchModulesFull } from './api';
   import { exportModules } from '../downloader/modules';
+  import FilePreview from '../files/FilePreview.svelte';
   import type { ModuleFull, ModuleItemFull } from '../../lib/types';
+
+  // Module File items open inline in the FilePreview deck.
+  let previewFileId = $state<number | null>(null);
 
   let { courseId }: { courseId: number } = $props();
 
@@ -84,7 +88,7 @@
   }
 </script>
 
-<div class="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
+<div class={`relative w-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans ${previewFileId != null ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
   <div class="max-w-3xl mx-auto px-6 py-8">
     <header class="mb-6 flex items-center justify-between gap-3 flex-wrap">
       <div class="min-w-0">
@@ -149,6 +153,12 @@
                   {:else}
                     {@const locked = !!item.content_details?.locked_for_user}
                     <a href={itemHref(courseId, item)}
+                       onclick={(e) => {
+                         if (item.type === 'File' && item.content_id != null) {
+                           e.preventDefault();
+                           previewFileId = item.content_id;
+                         }
+                       }}
                        class={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors ${locked ? 'opacity-50' : ''}`}
                        style={`padding-left: ${16 + (item.indent ?? 0) * 16}px`}>
                       <span class="w-5 h-5 rounded flex items-center justify-center text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex-shrink-0">
@@ -180,4 +190,17 @@
       </div>
     {/if}
   </div>
+
+  <!-- Inline file preview deck for module File items -->
+  {#if previewFileId != null}
+    {#key previewFileId}
+      <FilePreview
+        {courseId}
+        fileId={previewFileId}
+        embedded
+        hostId="paintbrush-modules-root"
+        backLabel="Modules"
+        onClose={() => previewFileId = null} />
+    {/key}
+  {/if}
 </div>
