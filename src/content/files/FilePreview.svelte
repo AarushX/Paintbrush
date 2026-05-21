@@ -7,7 +7,6 @@
   let {
     courseId,
     fileId,
-    canvadocSessionUrl = null,
     onShowCanvas,
     embedded = false,
     hostId = 'paintbrush-file-preview-root',
@@ -16,7 +15,6 @@
   }: {
     courseId: number;
     fileId: number;
-    canvadocSessionUrl?: string | null;
     onShowCanvas?: () => void;
     /** When true, FilePreview is rendered inside another viewer (Files /
      *  Modules) rather than as its own page mount. Back navigation calls
@@ -109,80 +107,23 @@
     folder ? (folder.full_name?.split('/').slice(1).join(' / ') || 'Course files') : ''
   );
 
-  let domCanvadocSessionUrl = $state<string | null>(null);
-  // Canvadoc session URL resolved by fetching the file's Canvas page —
-  // needed when embedded (no #doc_preview element on the host page) or
-  // after switching to a sibling file.
-  let resolvedCanvadocUrl = $state<string | null>(null);
-
-  // The DOM-scraped URL / prop only apply to the originally mounted file.
-  const onInitialFile = $derived(activeFileId === fileId);
-  const effectiveCanvadocUrl = $derived(
-    domCanvadocSessionUrl
-    ?? (onInitialFile ? canvadocSessionUrl : null)
-    ?? resolvedCanvadocUrl
-  );
-
-  let resolvingCanvadoc = $state(false);
-
-  // Only treat a file as in-iframe-previewable when we have a real
-  // canvadoc session URL. Loading Canvas's generic /preview endpoint in
-  // an iframe for a non-PDF doc makes Canvas serve the raw file with
-  // Content-Disposition: attachment — which the browser then DOWNLOADS.
-  // PDFs are safe to render via /preview, so allow those too.
-  const isPdf = $derived(
-    !!file && (file.display_name.toLowerCase().endsWith('.pdf') || file.content_type === 'application/pdf')
-  );
+  // Documents (PDF + Office formats) preview through Canvas's own
+  // `file_preview` endpoint — the exact path Canvas's native files page
+  // uses. It 302-redirects to a *freshly minted* canvadoc / DocViewer
+  // session, so it works for large PowerPoint / Word files that don't
+  // carry a pre-baked session URL on the file's HTML page. Generating a
+  // fresh session each time also avoids the "still processing" stall
+  // caused by loading a stale or expired scraped session URL.
   const docExt = $derived.by(() => {
     if (!file) return false;
     const ext = file.display_name.toLowerCase().split('.').pop() ?? '';
     return ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt', 'ods', 'odp'].includes(ext);
   });
-  const isPreviewableDoc = $derived(!!effectiveCanvadocUrl || isPdf);
-  // True while we're still fetching a canvadoc URL for a doc file —
-  // show a "preparing" state instead of the download fallback card.
-  const preparingPreview = $derived(docExt && !isPreviewableDoc && resolvingCanvadoc);
+  const isPreviewableDoc = $derived(docExt);
 
   const docPreviewUrl = $derived(
-    effectiveCanvadocUrl || `/courses/${courseId}/files/${activeFileId}/preview?doc_preview=1`
+    `/courses/${courseId}/files/${activeFileId}/file_preview?annotate=0`
   );
-
-  // Fetch the file's Canvas page and extract the canvadoc / DocViewer
-  // session URL. Parses the HTML properly (DOMParser auto-decodes
-  // entities) and tries several shapes Canvas uses across file types
-  // — PowerPoint in particular often carries the URL on a nested
-  // element or an inline preview iframe rather than #doc_preview.
-  async function resolveCanvadocUrl(cid: number, fid: number): Promise<string | null> {
-    try {
-      const html = await fetch(`/courses/${cid}/files/${fid}`, { credentials: 'include' }).then(r => r.text());
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-
-      // 1. Any element carrying the canvadoc session URL data attribute.
-      const dataEl = doc.querySelector<HTMLElement>('[data-canvadoc_session_url]');
-      const dataUrl = dataEl?.getAttribute('data-canvadoc_session_url');
-      if (dataUrl) return dataUrl;
-
-      // 2. An already-rendered DocViewer / canvadocs iframe.
-      const iframe = doc.querySelector<HTMLIFrameElement>(
-        'iframe[src*="canvadoc"], iframe[src*="docviewer"], iframe[src*="/sessions/"]'
-      );
-      const iframeSrc = iframe?.getAttribute('src');
-      if (iframeSrc) return iframeSrc;
-
-      // 3. Canvas embeds an ENV / preview JSON blob in a <script>. Look
-      //    for a canvadoc_session_url or attachment preview URL in it.
-      const scripts = Array.from(doc.querySelectorAll('script'));
-      for (const s of scripts) {
-        const txt = s.textContent ?? '';
-        const m = txt.match(/"canvadoc_session_url"\s*:\s*"([^"]+)"/)
-          ?? txt.match(/"(https?:\\?\/\\?\/[^"]*canvadoc[^"]*\/sessions\/[^"]+)"/);
-        if (m) return m[1].replace(/\\\//g, '/');
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
 
   // Reading filter → CSS filter string applied to the document surface.
   const filterCss = $derived(
@@ -232,17 +173,6 @@
           if (res.ok) textContent = await res.text();
           else isText = false;
         }
-        // Resolve a real canvadoc session URL for doc files (non-PDF,
-        // non-media). Without it the iframe would download the file.
-        if (type === 'other' || type === 'pdf') {
-          resolvingCanvadoc = true;
-          resolveCanvadocUrl(courseId, loadingFileId).then(url => {
-            // Guard against a stale resolution after the user switched files.
-            if (activeFileId !== loadingFileId) return;
-            if (url) resolvedCanvadocUrl = url;
-            resolvingCanvadoc = false;
-          });
-        }
         // Folder info + sibling files for the metadata sidebar — non-fatal.
         if (file.folder_id != null) {
           const fid = file.folder_id;
@@ -267,30 +197,11 @@
     activeFileId = id;
     file = null;
     folder = null;
-    domCanvadocSessionUrl = null;
-    resolvedCanvadocUrl = null;
-    resolvingCanvadoc = false;
     load();
   }
 
   onMount(() => {
     load();
-
-    const checkDom = () => {
-      // The DOM-scraped canvadoc URL only applies to the originally
-      // loaded file. Once the user has switched to a sibling, skip it.
-      if (activeFileId !== fileId) return;
-      const el = document.getElementById('doc_preview');
-      const attachmentId = el?.getAttribute('data-attachment_id');
-      if (attachmentId && Number(attachmentId) === fileId) {
-        const url = el?.getAttribute('data-canvadoc_session_url');
-        if (url && url !== domCanvadocSessionUrl) domCanvadocSessionUrl = url;
-      }
-    };
-    checkDom();
-    const interval = setInterval(checkDom, 100);
-    const observer = new MutationObserver(checkDom);
-    observer.observe(document.body, { childList: true, subtree: true });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && focusMode) focusMode = false;
@@ -298,8 +209,6 @@
     window.addEventListener('keydown', onKey);
 
     return () => {
-      clearInterval(interval);
-      observer.disconnect();
       window.removeEventListener('keydown', onKey);
       // Restore host geometry if we unmount while in focus mode.
       const host = getHost();
@@ -497,12 +406,6 @@
                     class="w-full h-full border-none"
                     style="color-scheme: light;">
             </iframe>
-          </div>
-
-        {:else if preparingPreview}
-          <div class="absolute inset-0 flex items-center justify-center flex-col gap-3">
-            <div class="w-8 h-8 rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-[var(--pb-brand)] animate-spin"></div>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Preparing document preview…</p>
           </div>
 
         {:else}
