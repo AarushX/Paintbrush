@@ -262,8 +262,10 @@
 
   function goBack() {
     if (embedded && onClose) { onClose(); return; }
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = `/courses/${courseId}/files`;
+    // Go straight to the Files page. history.back() would only step back
+    // one entry, so opening several files in a row (each a pushState)
+    // would otherwise need multiple clicks to escape the viewer.
+    window.location.href = `/courses/${courseId}/files`;
   }
 
   function copyText() {
