@@ -368,7 +368,7 @@
 
 {#if sidebarState.open}
   <aside
-    class="fixed top-0 z-[2147483647] h-screen bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl backdrop-saturate-150 border-l border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-zinc-100 font-sans shadow-2xl shadow-black/10 dark:shadow-black/30 transition-all duration-300 ease-[cubic-bezier(0.22,0.61,0.36,1)] relative"
+    class="fixed top-0 z-[2147483647] h-screen flex flex-col bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl backdrop-saturate-150 border-l border-zinc-200/50 dark:border-zinc-800/50 text-zinc-900 dark:text-zinc-100 font-sans shadow-2xl shadow-black/10 dark:shadow-black/30 transition-all duration-300 ease-[cubic-bezier(0.22,0.61,0.36,1)] relative"
     style="right: var(--pb-scrollbar-w, 0px); width: 340px; will-change: transform;">
 
     <!-- Brand-colored top accent stripe (matches Canvas's left-nav color) -->
@@ -474,7 +474,7 @@
         <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">No items due in the next 30 days.</p>
       </div>
     {:else}
-      <div class="relative overflow-y-auto" style="height: calc(100vh - 102px - var(--pb-canvas-slot-h, 0px));">
+      <div class="relative flex-1 min-h-0 overflow-y-auto" style="padding-bottom: var(--pb-canvas-slot-h, 0px);">
         {#each groupOrder as [key, label, color, dotColor]}
           {#if groups[key].length > 0}
             <div class={`sticky top-0 z-10 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm px-3 py-1.5 flex items-center gap-1.5 border-b border-zinc-100/50 dark:border-zinc-800/30 ${color}`}>
@@ -529,7 +529,7 @@
           </p>
         </div>
       {:else}
-        <div class="relative overflow-y-auto" style="height: calc(100vh - 142px - var(--pb-canvas-slot-h, 0px));">
+        <div class="relative flex-1 min-h-0 overflow-y-auto" style="padding-bottom: var(--pb-canvas-slot-h, 0px);">
           {#each filteredFiles as f (f.id)}
             <button
               onclick={() => openFileInViewer(f.id)}
