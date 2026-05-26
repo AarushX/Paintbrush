@@ -30,7 +30,18 @@
     const unlocked = !q.unlock_at || new Date(q.unlock_at).getTime() <= t;
     const notLocked = !q.lock_at || new Date(q.lock_at).getTime() > t;
     const notPast = !q.due_at || new Date(q.due_at).getTime() >= t;
-    return unlocked && notLocked && notPast && !q.locked_for_user;
+    return !!q.due_at && unlocked && notLocked && notPast && !q.locked_for_user;
+  }
+
+  // Open right now but with no due date set — these would otherwise get
+  // lumped in with deadline-bearing "Available now" quizzes; surfacing
+  // them separately makes the lack of a deadline obvious.
+  function isAnytime(q: QuizFull): boolean {
+    if (q.locked_for_user || q.due_at) return false;
+    const t = now();
+    const unlocked = !q.unlock_at || new Date(q.unlock_at).getTime() <= t;
+    const notLockedOut = !q.lock_at || new Date(q.lock_at).getTime() > t;
+    return unlocked && notLockedOut;
   }
 
   function isUpcoming(q: QuizFull): boolean {
@@ -45,8 +56,9 @@
     return new Date(q.due_at).getTime() < now() && !q.locked_for_user;
   }
 
-  function quizGroup(q: QuizFull): 'locked' | 'available' | 'upcoming' | 'past' | 'other' {
+  function quizGroup(q: QuizFull): 'locked' | 'available' | 'anytime' | 'upcoming' | 'past' | 'other' {
     if (q.locked_for_user) return 'locked';
+    if (isAnytime(q)) return 'anytime';
     if (isAvailable(q)) return 'available';
     if (isPast(q)) return 'past';
     if (isUpcoming(q)) return 'upcoming';
@@ -60,7 +72,8 @@
     if (filter === 'all') return list;
     return list.filter(qz => {
       if (filter === 'locked') return qz.locked_for_user;
-      if (filter === 'available') return isAvailable(qz);
+      // "Available" includes anytime quizzes — both are open to take now.
+      if (filter === 'available') return isAvailable(qz) || isAnytime(qz);
       if (filter === 'upcoming') return isUpcoming(qz);
       if (filter === 'past') return isPast(qz);
       return true;
@@ -69,6 +82,7 @@
 
   const grouped = $derived.by(() => {
     const available: QuizFull[] = [];
+    const anytime: QuizFull[] = [];
     const upcoming: QuizFull[] = [];
     const past: QuizFull[] = [];
     const locked: QuizFull[] = [];
@@ -77,12 +91,13 @@
     for (const q of filtered) {
       const g = quizGroup(q);
       if (g === 'available') available.push(q);
+      else if (g === 'anytime') anytime.push(q);
       else if (g === 'upcoming') upcoming.push(q);
       else if (g === 'past') past.push(q);
       else if (g === 'locked') locked.push(q);
       else other.push(q);
     }
-    return { available, upcoming, past, locked, other };
+    return { available, anytime, upcoming, past, locked, other };
   });
 
   function fmtDue(iso: string | null): string {
@@ -104,6 +119,7 @@
 
   const groupDefs: Array<{ key: keyof typeof grouped; label: string; dot: string; tone: string }> = [
     { key: 'available', label: 'Available now', dot: 'bg-emerald-500', tone: 'text-emerald-600 dark:text-emerald-400' },
+    { key: 'anytime', label: 'Anytime · no due date', dot: 'bg-amber-400', tone: 'text-amber-600 dark:text-amber-400' },
     { key: 'upcoming', label: 'Upcoming', dot: 'bg-indigo-500', tone: 'text-indigo-600 dark:text-indigo-400' },
     { key: 'past', label: 'Past', dot: 'bg-zinc-400', tone: 'text-zinc-500 dark:text-zinc-400' },
     { key: 'locked', label: 'Locked', dot: 'bg-red-400', tone: 'text-red-500 dark:text-red-400' },
@@ -203,13 +219,14 @@
                 </div>
                 <span class={`text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                   g.key === 'available' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                  g.key === 'anytime' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
                   g.key === 'upcoming' ? '' :
                   g.key === 'past' ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' :
                   g.key === 'locked' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
                   'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                 }`}
                 style={g.key === 'upcoming' ? 'background: var(--pb-brand-soft); color: var(--pb-brand-strong);' : ''}>
-                  {g.key === 'available' ? 'Open' : g.key === 'upcoming' ? 'Upcoming' : g.key === 'past' ? 'Closed' : g.key === 'locked' ? 'Locked' : 'Other'}
+                  {g.key === 'available' ? 'Open' : g.key === 'anytime' ? 'Anytime' : g.key === 'upcoming' ? 'Upcoming' : g.key === 'past' ? 'Closed' : g.key === 'locked' ? 'Locked' : 'Other'}
                 </span>
               </a>
             {/each}
