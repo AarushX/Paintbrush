@@ -48,10 +48,10 @@ export function groupedView() {
 
 export async function markItemComplete(item: PlannerItem) {
   try {
-    await markComplete(item);
+    const overrideId = await markComplete(item);
     sidebarState.items = sidebarState.items.map((i) =>
       i.plannable_id === item.plannable_id && i.plannable_type === item.plannable_type
-        ? { ...i, planner_override: { id: 0, marked_complete: true } }
+        ? { ...i, planner_override: { id: overrideId, marked_complete: true } }
         : i
     );
   } catch (err) {

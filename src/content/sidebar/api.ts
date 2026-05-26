@@ -1,4 +1,4 @@
-import { fetchAllPages, canvasPost } from '../../lib/canvas-api';
+import { fetchAllPages, canvasPost, canvasPut } from '../../lib/canvas-api';
 import type { PlannerItem, CourseColors } from '../../lib/types';
 import { getLocal, setLocal, getSession, setSession } from '../../lib/storage';
 
@@ -40,10 +40,23 @@ export async function getCourseColors(): Promise<Record<string, string>> {
   return data.custom_colors;
 }
 
-export async function markComplete(item: PlannerItem): Promise<void> {
-  await canvasPost('/api/v1/planner/overrides', {
+export async function markComplete(item: PlannerItem): Promise<number> {
+  // Canvas returns 400 when POSTing a duplicate override. If one already
+  // exists for this item, update it via PUT; otherwise create a new one.
+  // Returns the override id so the local store can use it for subsequent
+  // updates without re-fetching the planner.
+  const existingId = item.planner_override?.id;
+  if (existingId) {
+    const o = await canvasPut<{ id: number }>(`/api/v1/planner/overrides/${existingId}`, {
+      marked_complete: true,
+      dismissed: false
+    });
+    return o.id;
+  }
+  const o = await canvasPost<{ id: number }>('/api/v1/planner/overrides', {
     plannable_type: item.plannable_type,
     plannable_id: item.plannable_id,
     marked_complete: true
   });
+  return o.id;
 }
